@@ -255,10 +255,12 @@ asset errors that blocked the build and gameplay, and the engine-side additions 
 | Windows, PowerShell 5.1+ | the tools are PowerShell driven from `.bat` wrappers |
 | **Source SDK Base 2013 Singleplayer** (Steam app `243730`, free) and an **Alien Swarm** install | the engine the mod runs on — `GameInfo.txt` declares `SteamAppId 243730`. The repo ships no binaries (all of `game/bin/` and `game/*.exe` are gitignored), so the launcher and the engine binaries come from your own install |
 
+> [!NOTE]
 > Games are found automatically through Steam, wherever they are installed —
 > including across multiple Steam libraries on different drives. This means
 > that you **must** own the game on Steam, and have them installed.
 
+> [!WARNING]
 > **CS:GO must come from its beta branch, not CS2.** Valve still offers CS:GO through CS2, whose content
 > does not include the files the picks ask for. In Steam, open **CS2**'s *Properties → Betas* and
 > select the **`csgo`** branch — **not `csgo_legacy`**, which is typically the first entry in
