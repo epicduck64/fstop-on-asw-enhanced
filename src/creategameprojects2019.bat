@@ -1,3 +1,4 @@
+cd /d "%~dp0"
 devtools\bin\vpc.exe /deferred +game /mksln Game_Deferred-2019.sln /2013 /define:VS2019
 devtools\bin\vpc.exe /template +game /mksln Game_Template-2019.sln /2013 /define:VS2019
 devtools\bin\vpc.exe /portal_template +game /mksln Game_Portal_Template-2019.sln /2013 /define:VS2019

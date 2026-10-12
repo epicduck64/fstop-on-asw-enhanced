@@ -253,7 +253,7 @@ asset errors that blocked the build and gameplay, and the engine-side additions 
 | optionally **EP2**, **TF2**, **L4D2**, **CS:GO** | a handful of individual files the mod references, listed in `tools/retail_picks.txt` |
 | a copy of the **Portal 2 2009 depot** | the 2009-era content the mod was authored against; mounted directly. See below |
 | Windows, PowerShell 5.1+ | the tools are PowerShell driven from `.bat` wrappers |
-| **Source SDK Base 2013 Singleplayer** (Steam app `243730`, free) and an **Alien Swarm** install | the engine the mod runs on — `GameInfo.txt` declares `SteamAppId 243730`. The repo ships no binaries (all of `game/bin/` and `game/*.exe` are gitignored), so the launcher and the engine binaries come from your own install |
+| nothing to install for the engine | `GameInfo.txt` declares `SteamAppId 243730`, but `swarm.exe` and the engine binaries (`game/bin/`, `game/core/`, `game/platform/`, including the `matchmaking*.dll` the engine loads) ship with the repository, as upstream ships them — so an Alien Swarm or Source SDK Base 2013 install is not required to run it. Retail game content and the 2009 depot do **not** ship |
 
 > [!NOTE]
 > Games are found automatically through Steam, wherever they are installed —
@@ -294,7 +294,11 @@ asset errors that blocked the build and gameplay, and the engine-side additions 
    and `portal`, it works as-is; drop it straight into `game/p2-2009/`. No
    specific source or packaging is required. If `hl2/` is absent the mount for it
    is simply empty, so the three required folders above are enough.
-3. **Run the setup script:**
+3. **Nothing to fetch for the engine.** `swarm.exe` and the engine binaries (`game/bin/`,
+   `game/core/`, `game/platform/`) ship with the repository, as upstream does — they are already in
+   your clone. `swarm.exe` sits in `game/`, beside `game/bin/`, which is what the convenience
+   scripts' `..\swarm.exe` resolves to.
+4. **Run the setup script:**
 
    ```
    tools\setup.bat
@@ -303,17 +307,26 @@ asset errors that blocked the build and gameplay, and the engine-side additions 
    That restores the project's asset overrides into `game/portal_template/`
    (`generate_assets`), then unpacks the retail content you need into
    `game/retail/` (`build_mounts`).
-4. **Build the engine.** No binaries are shipped — `game/bin/` and `game/*.exe` are gitignored — and
-   the Visual Studio projects are generated, so first run `src\creategameprojects2019.bat`, then
-   build **Client (Portal)**, **Server (Portal)** and **ShaderLib** with Visual Studio 2019 (v142;
-   VS2022+ works if the v142 build tools component is installed). Each project publishes its output
+5. **Build the engine.** The solution ships — `src\Game_Portal_Template-2019.sln`, VS2019 format,
+   which modern Visual Studio opens directly — but the `.vcxproj` files it references do **not**:
+   they are VPC-generated, so run `src\creategameprojects2019.bat` once first. It works from any
+   directory. On a machine with only a newer Visual Studio it finishes with `ERROR: Unable to find RegKey for .vcproj or .vcxproj files
+   in solutions.` and a non-zero exit: VPC is a VS2013-era tool and needs that registration to write a
+   solution. It still writes every `.vcxproj`; the solution itself is the shipped one, so nothing is
+   missing. Then build **Client (Portal)**, **Server (Portal)** and **ShaderLib** with Visual Studio
+   2019 (v142; VS2022+ works if the v142 build tools component is installed). Each
+   project publishes its output
    into `game/portal_template/bin/`, beside the mod's GameInfo.txt, which is where the engine loads
    it from.
-   The launcher `swarm.exe` and the remaining engine DLLs come from your own Alien Swarm /
-   Source SDK Base 2013 install — put `swarm.exe` in `game/`, beside `game/bin/`, since the
-   convenience scripts launch `..\swarm.exe` from the mod folder.
-5. **Run the game.** The mod is `game/portal_template`; the convenience scripts
+6. **Run the game.** The mod is `game/portal_template`; the convenience scripts
    `run_mod.bat` / `run_map.bat` start it with the right options.
+
+> [!NOTE]
+> **A long loading screen is not a hang, and can take up to five minutes to pass.** The first launch
+> after the mount set changes — a fresh `setup`, or anything that alters what
+> `game/portal_template/GameInfo.txt` mounts — works through the mounts before it gets to the game,
+> reporting `progress N/M` to the console log while the window shows as *not responding*. That is
+> normal; let it finish.
 
 ---
 

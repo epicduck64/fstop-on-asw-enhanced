@@ -45,13 +45,26 @@ if (-not $LeakAssets) { $LeakAssets = Join-Path $RepoRoot 'game\p2-2009' }
 if (-not (Test-Path $LeakAssets)) { throw "Leak assets not found: $LeakAssets (place the leak and pass -LeakAssets)" }
 $LeakAssets = (Resolve-Path $LeakAssets).Path
 
-function Get-VpkEntries([string]$vpk) {
-    $b = [IO.File]::ReadAllBytes($vpk)
+function Get-VpkEntries([string]$vpk, [string]$OnlyPrefix = '') {
+    # Parse only the directory tree. It sits at the end of the pak and is small
+    # (megabytes at most); the payloads the entries point at are read later, at
+    # write time. Reading the whole file to enumerate names was most of a run's
+    # index cost, and it is gigabytes for the larger paks.
     $res = New-Object System.Collections.ArrayList
-    if ($b.Length -lt 12 -or [BitConverter]::ToUInt32($b,0) -ne $sig) { return $res }
-    $ver = [BitConverter]::ToUInt32($b,4); $treeSize = [BitConverter]::ToUInt32($b,8)
-    $hdr = 12; if ($ver -ge 2) { $hdr = 28 }
-    $pos = $hdr; $end = $hdr + $treeSize
+    $fs = [IO.File]::OpenRead($vpk)
+    try {
+        $h = New-Object byte[] 28
+        $hn = $fs.Read($h, 0, 28)
+        if ($hn -lt 12 -or [BitConverter]::ToUInt32($h,0) -ne $sig) { return $res }
+        $ver = [BitConverter]::ToUInt32($h,4); $treeSize = [BitConverter]::ToUInt32($h,8)
+        $hdr = 12; if ($ver -ge 2) { $hdr = 28 }
+        $b = New-Object byte[] $treeSize
+        [void]$fs.Seek($hdr, [IO.SeekOrigin]::Begin)
+        $got = 0
+        while ($got -lt $treeSize) { $n = $fs.Read($b, $got, $treeSize - $got); if ($n -le 0) { break }; $got += $n }
+    } finally { $fs.Close() }
+
+    $pos = 0; $end = $got
     while ($pos -lt $end) {
         $s=$pos; while ($pos -lt $end -and $b[$pos] -ne 0) { $pos++ }
         $ext=[Text.Encoding]::ASCII.GetString($b,$s,$pos-$s); $pos++
@@ -80,10 +93,46 @@ function Get-VpkEntries([string]$vpk) {
                     $pos += $pre
                 }
                 $pos += 2
+                # A named lookup (a pick) skips the object entirely unless the full
+                # path matches, which is what keeps a one-file pick from materialising
+                # hundreds of thousands of entries it will never look at. Compare the
+                # assembled path including the extension - the tree stores the name
+                # and the extension separately, and a pick may name either.
                 $full = if ($pth -eq ' ') { "$nm.$ext" } else { "$pth/$nm.$ext" }
+                if ($OnlyPrefix -and $full -notlike "$OnlyPrefix*") { continue }
                 [void]$res.Add([pscustomobject]@{ Path=$full; Vpk=$vpk; Arch=$arch; Off=$off; Len=$len; Pre=$pd })
             }
         }
+    }
+    return $res
+}
+
+# A full game's index is what a run spends its time on, and it does not change
+# unless the pak does, so it is cached beside the mount output. The tag in the
+# cache file name is the pak's size and write time; a mismatch means the pak was
+# updated, and the stale file is dropped. Picks never come through here - they
+# are looked up with -OnlyPrefix and never materialise a full index.
+function Get-VpkEntriesCached([string]$vpk, [string]$cacheDir) {
+    $fi = Get-Item -LiteralPath $vpk
+    if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
+    $stem = ($fi.Name -replace '[^A-Za-z0-9._-]','_')
+    $map  = @{ Path=$true; Arch=$true; Off=$true; Len=$true; Pre=$true }
+    $tag  = '{0}_{1}' -f $fi.Length, $fi.LastWriteTimeUtc.Ticks
+    $hit  = Get-ChildItem $cacheDir -Filter "$stem`_$tag.csv" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $hit) {
+        Get-ChildItem $cacheDir -Filter "$stem`_*.csv" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+        $fresh = Get-VpkEntries $vpk
+        $fresh |
+            Select-Object Path, Arch, Off, Len, @{n='Pre';e={ if ($_.Pre) { [Convert]::ToBase64String($_.Pre) } else { '' } }} |
+            Export-Csv -LiteralPath (Join-Path $cacheDir "$stem`_$tag.csv") -NoTypeInformation -Encoding UTF8
+        return $fresh
+    }
+    $res = New-Object System.Collections.ArrayList
+    foreach ($r in (Import-Csv -LiteralPath $hit.FullName)) {
+        [void]$res.Add([pscustomobject]@{
+            Path = $r.Path; Vpk = $vpk; Arch = [int]$r.Arch; Off = [long]$r.Off; Len = [int]$r.Len
+            Pre  = $(if ($r.Pre) { [Convert]::FromBase64String($r.Pre) } else { $null })
+        })
     }
     return $res
 }
@@ -115,15 +164,31 @@ function Get-Size($src) {
     return ($p + [long]$src.Len)
 }
 
+# A path at or past MAX_PATH (260) fails in Copy-Item and the IO APIs unless it
+# carries the \\?\ prefix, which opts out of the limit. Only absolute paths can
+# take it, and every path built here is absolute.
+function Get-LongPath([string]$p) {
+    if ($p.Length -ge 240 -and -not $p.StartsWith('\\?\')) { return '\\?\' + $p }
+    return $p
+}
+
 # ----------------------------------------------------- install index --------
 # Only scan what can actually be used: the full games, plus any game named by a
 # pick. Indexing CS:GO/L4D2/TF2 wholesale is tens of thousands of entries of
 # pure waste otherwise.
 $needGames = New-Object 'System.Collections.Generic.HashSet[string]'
+# Per-game pick paths, so a game that is only being scanned because a pick names
+# it can be looked up by name instead of having its whole pak indexed.
+$pickByGame = @{}
 foreach ($g in $FullGames) { [void]$needGames.Add($g.ToLowerInvariant()) }
 if (Test-Path $PickList) {
     foreach ($l in (Get-Content $PickList)) {
-        if ($l -match '^\s*([A-Za-z0-9]+)\s*:') { [void]$needGames.Add($matches[1].ToLowerInvariant()) }
+        if ($l -match '^\s*([A-Za-z0-9]+)\s*:\s*(.+)$') {
+            $pg = $matches[1].ToLowerInvariant(); $pp = $matches[2].Trim().ToLowerInvariant()
+            [void]$needGames.Add($pg)
+            if (-not $pickByGame.ContainsKey($pg)) { $pickByGame[$pg] = New-Object System.Collections.ArrayList }
+            [void]$pickByGame[$pg].Add($pp)
+        }
     }
 }
 Write-Host ("== retail sources (scanning: {0}) ==" -f (($needGames | Sort-Object) -join ', ')) -ForegroundColor Cyan
@@ -136,8 +201,10 @@ Write-Host ("== retail sources (scanning: {0}) ==" -f (($needGames | Sort-Object
 $appIds = @{ hl2='220'; ep2='420'; portal='400'; portal2='620'; tf='440'; l4d2='550'; csgo='730' }
 # game content lives in a subdir of the install; EP2 in particular shares the
 # "Half-Life 2" install with HL2, so scanning the install root would make the
-# two games index the same files.
-$gameSubdir = @{ hl2='hl2'; ep2='ep2'; portal='portal'; portal2='portal2'; tf='tf'; l4d2='left4dead2'; csgo='game\csgo' }
+# two games index the same files. CS:GO's content sits in the install's csgo\
+# (that is the `csgo` beta branch the README points at; CS2 uses game\csgo,
+# which we do not target - a CS2-only install simply falls back to the root).
+$gameSubdir = @{ hl2='hl2'; ep2='ep2'; portal='portal'; portal2='portal2'; tf='tf'; l4d2='left4dead2'; csgo='csgo' }
 function Get-SteamLibraries {
     $steam = $null
     try { $steam = (Get-ItemProperty -Path 'HKCU:\Software\Valve\Steam' -ErrorAction Stop).SteamPath } catch {}
@@ -183,12 +250,29 @@ foreach ($g in ($needGames | Sort-Object)) {
     $sub = $gameSubdir[$g]
     if ($sub) { $cand = Join-Path $dir $sub; if (Test-Path $cand) { $dir = $cand } }
     $n = 0; $loose = 0
+    # Full games: index everything, through the on-disk cache so a re-run does not
+    # re-parse unchanged paks. Pick-only games (EP2/TF2/L4D2/CS:GO): never build a
+    # full index - look the named paths up instead, which is what keeps a one-file
+    # pick from scanning the whole pak database.
+    $isFull = $FullGames -contains $g
+    $prefixes = @()
+    if (-not $isFull -and $pickByGame.ContainsKey($g)) { $prefixes = @($pickByGame[$g]) }
+    $cacheDir = Join-Path $retailDir '.vpk-cache'
     foreach ($v in (Get-ChildItem $dir -Recurse -File -Filter '*_dir.vpk' -ErrorAction SilentlyContinue)) {
-        foreach ($e in (Get-VpkEntries $v.FullName)) {
-            $k = $e.Path.ToLowerInvariant()
-            if (-not $index.ContainsKey($k)) { $index[$k] = New-Object System.Collections.ArrayList }
-            $index[$k].Add([pscustomobject]@{ Kind='vpk'; Game=$g; Full=$null; Vpk=$e.Vpk; Arch=$e.Arch; Off=$e.Off; Len=$e.Len; Pre=$e.Pre }) | Out-Null
-            $n++
+        if ($isFull) {
+            $sets = @(,(Get-VpkEntriesCached $v.FullName $cacheDir))
+        }
+        elseif ($prefixes.Count) {
+            $sets = @($prefixes | ForEach-Object { Get-VpkEntries $v.FullName $_ })
+        }
+        else { $sets = @() }
+        foreach ($set in $sets) {
+            foreach ($e in $set) {
+                $k = $e.Path.ToLowerInvariant()
+                if (-not $index.ContainsKey($k)) { $index[$k] = New-Object System.Collections.ArrayList }
+                $index[$k].Add([pscustomobject]@{ Kind='vpk'; Game=$g; Full=$null; Vpk=$e.Vpk; Arch=$e.Arch; Off=$e.Off; Len=$e.Len; Pre=$e.Pre }) | Out-Null
+                $n++
+            }
         }
     }
     foreach ($f in (Get-ChildItem $dir -Recurse -File -ErrorAction SilentlyContinue)) {
@@ -227,6 +311,25 @@ Write-Host "== already provided (skipped) ==" -ForegroundColor Cyan
 Write-Host ("  portal_template + core + platform {0,8:N0}" -f $providedModBase)
 Write-Host ("  leak trees (mounted directly)     {0,8:N0}" -f ($provided.Count - $providedModBase))
 Write-Host ("  total                             {0,8:N0}" -f $provided.Count)
+
+# Some leak trees were extracted from a subdirectory of the game they came from, so
+# retail indexes the same files under a different prefix. Portal 2 ships its
+# tempcontent as portal2\models\portal2_tempcontent\, while the leak holds it as a
+# tree of its own. Unmirrored, retail re-ships those files (~4,632, ~900 MB) even
+# though the leak already mounts them - and on a long install path the copy trips
+# MAX_PATH and aborts the write partway through.
+$LeakMirrors = @{ 'portal2_tempcontent' = 'models/portal2_tempcontent' }
+$mirrored = 0
+foreach ($t in $LeakMirrors.Keys) {
+    $dir = Join-Path $LeakAssets $t
+    if (-not (Test-Path $dir)) { continue }
+    $pre = $LeakMirrors[$t]
+    foreach ($f in (Get-ChildItem $dir -Recurse -File -ErrorAction SilentlyContinue)) {
+        $rel = $f.FullName.Substring($dir.Length+1).Replace('\','/').ToLowerInvariant()
+        if ($provided.Add("$pre/$rel")) { $mirrored++ }
+    }
+}
+if ($mirrored) { Write-Host ("  mirrored leak subtrees (also skipped) {0,6:N0}" -f $mirrored) }
 
 # ------------------------------------------------------- retail mount -------
 $retailPlan = @{}
@@ -270,7 +373,10 @@ Write-Host ""
 Write-Host "== retail (generated; excludes everything already provided) ==" -ForegroundColor Cyan
 Write-Host ("  {0:N0} files, {1:N1} MB" -f $retailPlan.Count, ($retailSize/1MB))
 $byGame.Keys | Sort-Object { -$byGame[$_] } | ForEach-Object { Write-Host ("      {0,-8} {1,8:N0}" -f $_, $byGame[$_]) }
-if ($pickMissing.Count) { Write-Host ("  picks unresolved: {0}" -f $pickMissing.Count) -ForegroundColor Yellow }
+if ($pickMissing.Count) {
+    Write-Host ("  picks unresolved: {0}" -f $pickMissing.Count) -ForegroundColor Yellow
+    foreach ($pm in ($pickMissing | Select-Object -First 10)) { Write-Host ("      " + $pm) -ForegroundColor Yellow }
+}
 
 if ($DryRun) { Write-Host "`n(dry run - nothing written)"; return }
 
@@ -291,19 +397,21 @@ try {
     foreach ($k in $order) {
         $s = $retailPlan[$k]
         $out = Join-Path $retailDir ($k -replace '/','\')
-        if (Test-Path -LiteralPath $out) { continue }
-        $d = Split-Path $out -Parent
-        if (-not (Test-Path -LiteralPath $d)) { New-Item -ItemType Directory -Path $d -Force | Out-Null }
+        $lp  = Get-LongPath $out
+        if (Test-Path -LiteralPath $lp) { continue }
+        $d  = Split-Path $out -Parent
+        $lpd = Get-LongPath $d
+        if (-not (Test-Path -LiteralPath $lpd)) { [IO.Directory]::CreateDirectory($lpd) | Out-Null }
 
         if ($s.Kind -ne 'vpk') {
-            Copy-Item -LiteralPath $s.Full -Destination $out -Force
+            Copy-Item -LiteralPath (Get-LongPath $s.Full) -Destination $lp -Force
         } else {
             $chunk = if ($s.Arch -eq 0x7FFF) { $s.Vpk } else { [regex]::Replace($s.Vpk,'_dir\.vpk$',('_{0:D3}.vpk' -f $s.Arch)) }
             if ($curChunk -ne $chunk) {
                 if ($curFs) { $curFs.Close() }
-                $curFs = [IO.File]::OpenRead($chunk); $curChunk = $chunk
+                $curFs = [IO.File]::OpenRead((Get-LongPath $chunk)); $curChunk = $chunk
             }
-            $outFs = [IO.File]::Create($out)
+            $outFs = [IO.File]::Create($lp)
             try {
                 if ($s.Pre) { $outFs.Write($s.Pre,0,$s.Pre.Length) }
                 [void]$curFs.Seek([long]$s.Off,[IO.SeekOrigin]::Begin)

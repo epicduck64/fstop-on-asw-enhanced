@@ -1,26 +1,22 @@
 # ============================================================================
 # F-STOP repo .gitignore
 #
-# Policy: this repository ships the F-STOP port only. Valve/retail content and
-# machine-local pointers are IGNORED (not deleted) so local dev keeps working
-# but they can never enter a commit. Retail the game needs at runtime comes
-# from the player's own installed copy.
-# The ignore list mirrors upstream (sears2424/Enhanced-Source) as well - see the
-# upstream-parity block below.
+# Policy: this repository ships the F-STOP port plus the engine binaries that
+# upstream (sears2424/Enhanced-Source) ships - game/bin, game/core, game/platform
+# and the launchers. Retail game content and the Portal 2 2009 depot are IGNORED
+# (not deleted) so local dev keeps working but they can never enter a commit; that
+# content comes from the player's own installed copy.
+# The ignore list mirrors upstream where it does not conflict with the above - see
+# the upstream-parity block below.
 # ============================================================================
 
-# --- Valve / retail trees (provided by the player's own install) ---
-/game/bin/
-/game/core/
-/game/platform/
+# --- retail trees (provided by the player's own install) ---
 /game/hl2_template/
 /game/template/
 /game/template_additional_content/
 /game/sdk_content/
 /game/deferred/
 /game/vectronic/
-/game/*.exe
-/game/srcds_run
 /game/hl2.exe
 /game/hl2.wrap.exe
 
@@ -33,6 +29,9 @@
 /src/devtools/bin/*.dll
 
 # --- compiler/build intermediates (never source) ---
+# shaderlib.lib is a build output, rewritten by every ShaderLib build. It used to be
+# tracked (upstream ships prebuilt libs) but that leaves the tree permanently dirty.
+/src/lib/public/shaderlib.lib
 *.obj
 *.pdb
 *.tlog
@@ -50,8 +49,12 @@
 
 # --- upstream parity: everything Enhanced Source's .gitignore skips ---
 # Mirrors sears2424/Enhanced-Source/.gitignore so this repo ships exactly what
-# upstream ships. The VS project/solution files here are VPC-generated (the .vpc
-# sources ship, and vpc.exe is in src/devtools), so they are reproducible.
+# upstream ships. The VS *project* files are VPC-generated (the .vpc sources ship, and
+# vpc.exe is in src/devtools). The one *solution* is not reproducible though: VPC's -mksln
+# needs the VS2013 project-file registration (VisualStudio.vcxproj.12.0), which a machine
+# with only a newer Visual Studio does not have - it writes every .vcxproj and then
+# abandons the solution. So src/Game_Portal_Template-2019.sln ships with the repo
+# (re-included below) and the build works on any machine.
 *.suo
 *.user
 *.sln.docstates
@@ -68,6 +71,7 @@ vc100.pdb
 *.vpc_crc
 *.vpc.sentinel
 *.sln
+!/src/Game_Portal_Template-2019.sln
 *.vcxproj
 *.vcxproj.filters
 *.log
@@ -88,6 +92,8 @@ GameConfig.txt
 /game/portal_template/stats.txt
 /game/portal_template/tilegen_log.txt
 /game/portal_template/modelsounds.cache
+# engine runtime state - the game rewrites this on launch
+/game/portal_template/cfg/config.cfg
 /game/portal_template/voice_ban.dt
 /game/portal_template/maps/soundcache/
 /game/portal_template/screenshots/

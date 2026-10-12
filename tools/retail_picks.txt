@@ -35,6 +35,15 @@ ep2:particles/grub_blood.pcf
 # (sprites/bluelaser1, sprites/light_glow02_noz) and their textures come from the leak's hl2.
 ep2:particles/hunter_projectile.pcf
 
+# --- CS:GO-only smoke texture ---
+# The five materials/particle/vistaSmokeV1/*.vmt originally used this texture as
+# their $basetexture; the port re-pointed them at vistasmokev1 (which every game
+# ships) so the mod no longer depends on it, but it is picked here so the
+# original material stays available and the CS:GO source path is exercised.
+# CS:GO reads from the install's csgo\ (the `csgo` beta branch); see
+# $gameSubdir in build_mounts.ps1.
+csgo:materials/particle/vistaSmokeV1/vistasmokev1_emods
+
 # --- water splash texture used by the particle set ---
 materials/particle/water_splash/water_splash.vtf
 

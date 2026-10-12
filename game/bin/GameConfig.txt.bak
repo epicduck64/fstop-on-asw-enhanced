@@ -1,0 +1,31 @@
+"Configs"
+{
+	"Games"
+	{
+		"Aperture (F-STOP)"
+		{
+			"GameDir"		"C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\game\portal_template"
+			"Hammer"
+			{
+				"GameData0"		"C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\game\bin\portal2.fgd"
+				"TextureFormat"		"5"
+				"MapFormat"		"4"
+				"DefaultTextureScale"		"0.250000"
+				"DefaultLightmapScale"		"16"
+				"GameExe"		"C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\game\swarm.exe"
+				"DefaultSolidEntity"		"color_correction_volume"
+				"DefaultPointEntity"		"ai_addon_builder"
+				"BSP"		"C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\game\bin\vbsp.exe"
+				"Vis"		"C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\game\bin\vvis.exe"
+				"Light"		"C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\game\bin\vrad.exe"
+				"GameExeDir"		"C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\game"
+				"MapDir"		"C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\game\portal_template\mapsrc"
+				"BSPDir"		"C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\game\portal_template\maps"
+				"PrefabDir"		"C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\game\bin\Prefabs"
+				"CordonTexture"		"BLACK"
+				"MaterialExcludeCount"		"0"
+			}
+		}
+	}
+	"SDKVersion"		"5"
+}
