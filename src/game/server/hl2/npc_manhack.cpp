@@ -1108,34 +1108,6 @@ void CNPC_Manhack::MaintainGroundHeight( void )
 //-----------------------------------------------------------------------------
 bool CNPC_Manhack::OverrideMove( float flInterval )
 {
-	// MDBG: temporary - the climb is the upward force in MaintainGroundHeight(), called just below.
-	// Print the numbers that decide whether it is the trace, the force or the frame rate.
-	if ( FClassnameIs( this, "npc_manhack" ) )
-	{
-		static float flNextMDbg = 0.0f;
-		if ( gpGlobals->curtime >= flNextMDbg )
-		{
-			flNextMDbg = gpGlobals->curtime + 1.0f;
-			Vector vVel = GetCurrentVelocity();
-			Vector vPhys( vec3_origin );
-			if ( VPhysicsGetObject() )
-			{
-				VPhysicsGetObject()->GetVelocity( &vPhys, NULL );
-			}
-			const Vector &vMins = CollisionProp()->OBBMins();
-			const Vector &vMaxs = CollisionProp()->OBBMaxs();
-			bool bGoal = GetNavigator()->IsGoalActive();
-			Vector vGoal = bGoal ? GetNavigator()->GetGoalPos() : vec3_origin;
-			Vector vTgt = ( m_fForceMoveTime > gpGlobals->curtime ) ? m_vForceMoveTarget
-					   : ( m_fSwarmMoveTime > gpGlobals->curtime ) ? m_vSwarmMoveTarget : vec3_origin;
-			Msg( "MDBG z=%.1f curVel.z=%.1f physVel.z=%.1f force.z=%.1f hullz=%.1f..%.1f eng=%.2f\n",
-				 GetAbsOrigin().z, vVel.z, vPhys.z, m_vForceVelocity.z, vMins.z, vMaxs.z, m_fEnginePowerScale );
-			Msg( "MDBG     target=(%.1f %.1f %.1f) goal=(%.1f %.1f %.1f) goalactive=%d navtype=%d loiter=%d\n",
-				 vTgt.x, vTgt.y, vTgt.z, vGoal.x, vGoal.y, vGoal.z,
-				 bGoal ? 1 : 0, GetNavigator()->GetNavType(), IsLoitering() ? 1 : 0 );
-		}
-	}
-
 	SpinBlades( flInterval );
 		
 	// Don't execute any move code if packed up.
