@@ -1,0 +1,43 @@
+# retail_picks.txt - hand-picked files pulled from the NON-full games.
+#
+# Half-Life 2, Portal 1 and Portal 2 are pulled in FULL (see build_mounts.ps1
+# -FullGames). The leak trees are mounted directly and are never listed here.
+# This file is only for anything the mod needs from the remaining games
+# (EP2, TF2, L4D2, CS:GO), which the engine cannot mount (v2 VPKs).
+#
+# Syntax: path | game:path | # comment. A path with no extension is resolved
+# against the usual asset extensions; models also pull their companion files.
+
+# --- F-STOP HUD (camera / photo inventory) ---
+materials/HUD/hud_icon_camera
+materials/HUD/hud_icon_neutral
+materials/HUD/hud_icon_picture
+materials/HUD/inv_full
+materials/HUD/inv_photo1
+materials/HUD/inv_photo2
+materials/HUD/inv_photo3
+materials/HUD/inv_photo_numbers1
+materials/HUD/inv_photo_numbers2
+materials/HUD/inv_photo_numbers3
+materials/HUD/invalid
+materials/HUD/light_glow03
+
+# --- particle systems ---
+particles/impact_fx.pcf
+particles/rain_fx.pcf
+ep2:particles/grub_blood.pcf
+
+# --- android missile explosion (EP2 Hunter particle) ---
+# npc_android_missile precaches hunter_flechette_trail, hunter_flechette_trail_striderbuster
+# and hunter_projectile_explosion_1, and dispatches the last one from Explode(). Those systems
+# ship in ep2_pak (the HL2 install), which is not one of the full games here, so the file has
+# to be picked - no HL2/Portal/Portal2 tree carries it. The sprites it precaches
+# (sprites/bluelaser1, sprites/light_glow02_noz) and their textures come from the leak's hl2.
+ep2:particles/hunter_projectile.pcf
+
+# --- water splash texture used by the particle set ---
+materials/particle/water_splash/water_splash.vtf
+
+# --- TF2-sourced textures referenced by the mod's props_farm materials ---
+tf:materials/models/props_farm/tree001_pyro
+tf:materials/models/props_farm/tree001_card_pyro

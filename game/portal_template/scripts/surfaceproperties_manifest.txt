@@ -11,6 +11,8 @@ surfaceproperties_manifest
 	"file"		"scripts/surfaceproperties.txt"
 	
 	// List additional surface property files here:
-	//"file"		"scripts/surfaceproperties_hl2.txt"
+	// Enables zombieflesh (and the rest of the HL2 set) so ragdoll impacts use
+	// body sounds instead of falling back to the default plastic impacts.
+	"file"		"scripts/surfaceproperties_hl2.txt"
 	"file"		"scripts/surfaceproperties_portal.txt"
 }

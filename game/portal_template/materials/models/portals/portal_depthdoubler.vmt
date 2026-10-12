@@ -1,5 +1,4 @@
-
-Portal
+"Portal"
 {
 $basetexture _rt_DepthDoubler 
 $alphamasktexture "models/portals/portal_mask" 

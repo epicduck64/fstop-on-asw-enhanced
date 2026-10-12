@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Large vehicle what delivers combine troops.
 //
@@ -456,6 +456,7 @@ void CCombineDropshipContainer::Spawn()
 #endif //_XBOX
 
 	m_iHealth = m_iMaxHealth = sk_dropship_container_health.GetFloat();
+	m_flFrozenMax = 0.0f;
 }
 
 

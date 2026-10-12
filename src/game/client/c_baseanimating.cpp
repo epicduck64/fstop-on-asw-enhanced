@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -1592,6 +1592,9 @@ void C_BaseAnimating::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quater
 				if (!m_pJiggleBones)
 				{
 					m_pJiggleBones = new CJiggleBones;
+					// TEMPORARY diagnostic - names the owner in the "tipPos/tipVel NaN" warnings
+					m_pJiggleBones->m_pDebugModelName = GetModelName();
+					m_pJiggleBones->m_nDebugEntIndex = entindex();
 				}
 
 				// do jiggle physics

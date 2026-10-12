@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -35,5 +35,11 @@ STUB_WEAPON_CLASS( weapon_crossbow, WeaponCrossbow, C_BaseHLCombatWeapon );
 STUB_WEAPON_CLASS( weapon_slam, Weapon_SLAM, C_BaseHLCombatWeapon );
 STUB_WEAPON_CLASS( weapon_crowbar, WeaponCrowbar, C_BaseHLBludgeonWeapon );
 STUB_WEAPON_CLASS( weapon_hopwire, WeaponHopwire, C_BaseHLCombatWeapon );
+
+#ifdef PORTAL2
+// F-STOP ("Aperture"): client counterparts for the camera / placement weapons
+STUB_WEAPON_CLASS( weapon_camera, WeaponCamera, C_BaseCombatWeapon );
+STUB_WEAPON_CLASS( weapon_placement, WeaponPlacement, C_BaseCombatWeapon );
+#endif // PORTAL2
 
 

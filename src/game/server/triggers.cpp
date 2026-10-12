@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Spawn and use functions for editor-placed triggers.
 //
@@ -5195,12 +5195,24 @@ void CTriggerAutoCrouch::EndTouch( CBaseEntity *pOther )
 //----------------------------------------------------------------------------------
 void CTriggerCallback::Spawn( void )
 {
-	// Setup our basic attributes
+	// NOTE: do NOT call InitTrigger() here. It derives the collision bounds from
+	// the model, and this entity has no model, so it collapses the trigger to
+	// zero size - which still catches the player (a big hull clips a point) but
+	// misses NPCs entirely. Create() already sets the real bounds with
+	// UTIL_SetSize before DispatchSpawn, so leave them alone.
 	SetMoveType( MOVETYPE_NONE );
 	SetSolid( SOLID_OBB );
 	SetSolidFlags( FSOLID_NOT_SOLID|FSOLID_TRIGGER );
 
 	AddSpawnFlags( SF_TRIGGER_ALLOW_CLIENTS|SF_TRIGGER_ALLOW_NPCS|SF_TRIGGER_ALLOW_PHYSICS );
+}
+
+//----------------------------------------------------------------------------------
+// Purpose:
+//----------------------------------------------------------------------------------
+void CTriggerCallback::EndTouch( CBaseEntity *pOther )
+{
+	BaseClass::EndTouch( pOther );
 }
 
 //----------------------------------------------------------------------------------
@@ -5227,6 +5239,15 @@ void CTriggerCallback::StartTouch( CBaseEntity *pOther )
 
 	BaseClass::StartTouch( pOther );
 }
+
+
+// The class existed with no datadesc and no registration, so entities created
+// via CreateEntityByName("trigger_callback") came back NULL and every callback
+// trigger (prop_mousetrap's, for one) silently did nothing.
+BEGIN_DATADESC( CTriggerCallback )
+END_DATADESC()
+
+LINK_ENTITY_TO_CLASS( trigger_callback, CTriggerCallback );
 
 
 bool IsTriggerClass( CBaseEntity *pEntity )

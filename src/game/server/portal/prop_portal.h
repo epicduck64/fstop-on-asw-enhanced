@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -16,6 +16,8 @@
 
 // FIX ME
 #include "portal_shareddefs.h"
+
+#define PORTAL_LINKAGE_GROUP_INVALID 255
 
 static const char *s_pDelayedPlacementContext = "DelayedPlacementContext";
 static const char *s_pTestRestingSurfaceContext = "TestRestingSurfaceContext";
@@ -45,6 +47,7 @@ public:
 
 	EHANDLE	m_hMicrophone; //the microphone for teleporting sound
 	EHANDLE	m_hSpeaker; //the speaker for teleported sound
+	bool	m_bHACKUseMicrophones;	// If this portal should use a mic/speaker system to transmit sounds through portals
 	
 	CSoundPatch		*m_pAmbientSound;
 
@@ -133,17 +136,21 @@ private:
 	unsigned char			m_iLinkageGroupID; //a group ID specifying which portals this one can possibly link to
 
 	CPhysCollide			*m_pCollisionShape;
-	void					RemovePortalMicAndSpeaker();	// Cleans up the portal's internal audio members
 	void					UpdateCorners( void );			// Updates the four corners of this portal on spawn and placement
 
 public:
+	void					RemovePortalMicAndSpeaker();	// Cleans up the portal's internal audio members
 	inline unsigned char	GetLinkageGroup( void ) const { return m_iLinkageGroupID; };
 	void					ChangeLinkageGroup( unsigned char iLinkageGroupID );
+
+	void					Resize( float fHalfWidth, float fHalfHeight );
 
 	//find a portal with the designated attributes, or creates one with them, favors active portals over inactive
 	static CProp_Portal		*FindPortal( unsigned char iLinkageGroupID, bool bPortal2, bool bCreateIfNothingFound = false );
 	static const CUtlVector<CProp_Portal *> *GetPortalLinkageGroup( unsigned char iLinkageGroupID );
 };
+
+unsigned char UTIL_GetUnusedLinkageID( void );
 
 
 //-----------------------------------------------------------------------------

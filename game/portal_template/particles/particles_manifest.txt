@@ -61,6 +61,29 @@ particles_manifest
 
 	"file"		"particles/neurotoxins.pcf"
 	"file"		"particles/finale_fx.pcf"
+
+	// F-STOP / Aperture (Portal 2) particles
+	"file"		"particles/airvents.pcf"
+	"file"		"particles/chicken.pcf"
+	"file"		"particles/clouds.pcf"
+	"file"		"particles/zombie.pcf"
+	"file"		"particles/geyser.pcf"
+	"file"		"particles/fizzler.pcf"
+	"file"		"particles/electriccharge.pcf"
+	"file"		"particles/electriczap.pcf"
+	"file"		"particles/water_leaks.pcf"
+	"file"		"particles/portal2_coop_ping_effect.pcf"
+	"file"		"particles/laser_relay_effects.pcf"
+
+	// EP2 antlion grub blood - dispatched by npc_android on death
+	"file"		"particles/grub_blood.pcf"
+
+	// EP2 hunter flechette/projectile - the F-STOP android missile reuses these systems
+	// (hunter_flechette_trail, hunter_flechette_trail_striderbuster,
+	// hunter_projectile_explosion_1); without them the missile shows the missing-"X" sprite
+	"file"		"particles/hunter_flechette.pcf"
+	"file"		"particles/hunter_projectile.pcf"
+
 	"file"		"particles/water_impact.pcf"
 	"file"		"particles/fire_01.pcf"
 	"file"		"particles/burning_fx.pcf"

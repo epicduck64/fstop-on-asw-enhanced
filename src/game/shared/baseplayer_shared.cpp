@@ -794,6 +794,16 @@ void CBasePlayer::Weapon_SetLast( CBaseCombatWeapon *pWeapon )
 //-----------------------------------------------------------------------------
 bool CBasePlayer::Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex /*=0*/ ) 
 {
+	// A dead player must not switch to a weapon. CBaseCombatWeapon::DefaultDeploy() refuses for
+	// a dead owner ("dead men deploy no weapons"), but the switch has already assigned
+	// m_hActiveWeapon by then and the failure is discarded - leaving the player holding a weapon
+	// that is never deployed: no viewmodel, and selecting it again does nothing. This is the
+	// single choke point, so it covers picking one up and selecting one already owned alike.
+	if ( pWeapon != NULL && !IsAlive() )
+	{
+		return false;
+	}
+
 	CBaseCombatWeapon *pLastWeapon = GetActiveWeapon();
 
 	if ( BaseClass::Weapon_Switch( pWeapon, viewmodelindex ))

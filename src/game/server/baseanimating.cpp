@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright Ã‚Â© 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Base class for all animating characters and objects.
 //
@@ -22,10 +22,11 @@
 #include "tier0/vprof.h"
 #include "EntityFlame.h"
 #include "EntityDissolve.h"
-#if defined( INFESTED_DLL )
 #include "EntityFreezing.h"
-#endif
 #include "ai_basenpc.h"
+#ifdef PORTAL2
+#include "ai_criteria.h"
+#endif // PORTAL2
 #include "physics_prop_ragdoll.h"
 #include "datacache/idatacache.h"
 #include "smoke_trail.h"
@@ -224,6 +225,14 @@ BEGIN_DATADESC( CBaseAnimating )
 
 	DEFINE_FIELD( m_fBoneCacheFlags, FIELD_SHORT ),
 
+#ifdef PORTAL2
+	DEFINE_KEYFIELD( m_nObjectScaleLevel, FIELD_INTEGER, "scalevalue" ),
+	DEFINE_KEYFIELD( m_bCanBeCaptured, FIELD_BOOLEAN, "canbecaptured" ),
+
+	DEFINE_OUTPUT( m_OnCameraCapture, "OnCameraCapture" ),
+	DEFINE_OUTPUT( m_OnCameraRelease, "OnCameraRelease" ),
+#endif // PORTAL2
+
 #ifdef PORTAL
 	DEFINE_OUTPUT(m_OnFizzled, "OnFizzled"),
 #endif
@@ -284,6 +293,9 @@ BEGIN_ENT_SCRIPTDESC( CBaseAnimating, CBaseEntity, "Animating models" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAttachmentAngles, "GetAttachmentAngles", "Get the attachement id's angles as a p,y,r vector"  )
 	DEFINE_SCRIPTFUNC( IsSequenceFinished, "Ask whether the main sequence is done playing" )
 	DEFINE_SCRIPTFUNC( SetBodygroup, "Sets a bodygroup")
+#ifdef PORTAL2
+	DEFINE_SCRIPTFUNC( GetObjectScaleLevel, "The scale size of the entity" )
+#endif // PORTAL2
 END_SCRIPTDESC();
 
 CBaseAnimating::CBaseAnimating()
@@ -307,8 +319,11 @@ CBaseAnimating::CBaseAnimating()
 	m_pStudioHdr = NULL;
 	SetGlobalFadeScale( 1.0f );
 	m_fBoneCacheFlags = 0;
-	
 
+#ifdef PORTAL2
+	m_nObjectScaleLevel = 0;	 // No scale
+	m_bCanBeCaptured = true;
+#endif // PORTAL2
 }
 
 CBaseAnimating::~CBaseAnimating()
@@ -340,7 +355,17 @@ void CBaseAnimating::Activate()
 	SetLightingOrigin( m_iszLightingOrigin );
 	SetLightingOriginRelative( m_iszLightingOriginRelative );
 
+#ifdef PORTAL2
+	// Scaled physics objects (re)create their physics here
+	if ( GetObjectScaleLevel() != 0 && VPhysicsGetObject() )
+	{	
+		// sanity check to make sure 'm_flModelScale' is in sync with the 
+		// mod specific 'm_nObjectScaleLevel' member.
+		Assert( m_flModelScale > 0.0f && m_flModelScale != 1.0f );
 
+		UTIL_CreateScaledPhysObject( this, m_flModelScale );
+	}
+#endif // PORTAL2
 }
 
 
@@ -391,6 +416,22 @@ void CBaseAnimating::OnRestore()
 	PopulatePoseParameters();
 }
 
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Implemented in portal2/trigger_photo_eraser.cpp
+void UTIL_NotifyCapturedEntityRemoved( CBaseEntity *pEntity );
+
+//-----------------------------------------------------------------------------
+// Purpose: Every capturable object is a CBaseAnimating, so hooking the base type catches
+//          a held capture being removed (ent_remove, incineration, cleanup) for all of
+//          them from one place - with no listener registration to lose track of.
+//-----------------------------------------------------------------------------
+void CBaseAnimating::UpdateOnRemove()
+{
+	UTIL_NotifyCapturedEntityRemoved( this );
+	BaseClass::UpdateOnRemove();
+}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -1579,7 +1620,11 @@ void CBaseAnimating::InitStepHeightAdjust( void )
 // Purpose: Interpolates client IK floor position and drops entity down so that the feet will reach
 //-----------------------------------------------------------------------------
 
-ConVar npc_height_adjust( "npc_height_adjust", "1", FCVAR_ARCHIVE, "Enable test mode for ik height adjustment" );
+// Off by default: this is Valve's test mode, and it is actively harmful on a rig whose root bone
+// translates (the F-STOP zombie). It feeds a recursive filter into the rendered origin, so the
+// model climbs a little on every IK ground-contact window until it is clamped - visible as a
+// zombie that starts clipping into the floor, resets when an attack closes the window, then floats.
+ConVar npc_height_adjust( "npc_height_adjust", "0", FCVAR_ARCHIVE, "Enable test mode for ik height adjustment" );
 
 void CBaseAnimating::UpdateStepOrigin()
 {
@@ -1887,6 +1932,7 @@ void CBaseAnimating::SetupBones( matrix3x4a_t *pBoneToWorld, int boneMask )
 			GetSkeleton( pStudioHdr, pos, q, boneMask );
 		}
 	}
+
 	
 	if ( GetMoveParent() )
 	{
@@ -2653,6 +2699,15 @@ bool CBaseAnimating::GetIntervalMovement( float flIntervalUsed, bool &bMoveSeqFi
 	if (Studio_SeqMovement( pstudiohdr, GetSequence(), GetCycle(), flNextCycle, GetPoseParameterArray(), deltaPos, deltaAngles ))
 	{
 		VectorYawRotate( deltaPos, GetLocalAngles().y, deltaPos );
+
+		// A walking NPC is carried forward by its sequence; its height comes from the
+		// floor, never from the animation. Same condition AutoMovement() uses to choose
+		// a ground motor.
+		if ( GetMoveType() == MOVETYPE_STEP && !( GetFlags() & FL_FLY ) )
+		{
+			deltaPos.z = 0.0f;
+		}
+
 		newPosition = GetLocalOrigin() + deltaPos;
 		newAngles.Init();
 		newAngles.y = GetLocalAngles().y + deltaAngles.y;
@@ -2763,7 +2818,23 @@ void CBaseAnimating::SetModel( const char *szModelName )
 
 	PopulatePoseParameters();
 
-
+#ifdef PORTAL2
+	// After we set our bounds based on the model's default size,
+	// scale the bounds based on any starting scale value set in the map.
+	if ( GetObjectScaleLevel() != 0 )
+	{	
+		CaptureInfo_t captureInfo;
+		UTIL_InitCaptureInfo( captureInfo, this );
+		float flModelScale = 1.0f;
+		if ( captureInfo.pPlacementQuery )
+		{
+			flModelScale = captureInfo.pPlacementQuery->GetScaleForStep( GetObjectScaleLevel(), &captureInfo );
+		}
+		
+		// Scale by this amount to reach our target scale
+		SetModelScale( flModelScale );
+	}
+#endif // PORTAL2
 }
 
 //-----------------------------------------------------------------------------
@@ -3540,6 +3611,19 @@ void CBaseAnimating::ModifyOrAppendCriteria( AI_CriteriaSet& set )
 {
 	BaseClass::ModifyOrAppendCriteria( set );
 
+#ifdef PORTAL2
+	int nObjectScaleLevel = GetObjectScaleLevel();
+	int nNumStepsUp = Get_CPhotoPlacementQuery()->GetNumScaleUpSteps(NULL);
+	int nNumStepsDown = Get_CPhotoPlacementQuery()->GetNumScaleDownSteps(NULL);
+
+	if ( nObjectScaleLevel == 0 )
+		set.AppendCriteria( "object_size", "normal" );
+	else if ( nObjectScaleLevel == nNumStepsUp )
+		set.AppendCriteria( "object_size", "large" );
+	else if ( nObjectScaleLevel == nNumStepsDown )
+		set.AppendCriteria( "object_size", "small" );
+#endif // PORTAL2
+
 	// TODO
 	// Append any animation state parameters here
 }
@@ -3774,7 +3858,6 @@ void CBaseAnimating::InputBecomeRagdoll( inputdata_t &inputdata )
 
 void CBaseAnimating::Thaw( float flThawAmount )
 {
-#if defined( INFESTED_DLL )
 	if ( m_flFrozen <= 0.0f )
 		return;
 
@@ -3847,7 +3930,6 @@ void CBaseAnimating::Thaw( float flThawAmount )
 			RemoveFlag( FL_FREEZING );
 		}
 	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -3870,7 +3952,6 @@ void CBaseAnimating::ToggleFreeze()
 //-----------------------------------------------------------------------------
 void CBaseAnimating::Freeze( float flFreezeAmount, CBaseEntity *pFreezer, Ray_t *pFreezeRay ) 
 {
-#if defined( INFESTED_DLL )
 	if ( flFreezeAmount < 0 )
 	{
 		// This is a debugging freeze
@@ -3977,7 +4058,6 @@ void CBaseAnimating::Freeze( float flFreezeAmount, CBaseEntity *pFreezer, Ray_t 
 	}
 
 	pFreezing->SetFrozen( m_flFrozen );
-#endif
 }
 
 
@@ -4029,3 +4109,98 @@ void CBaseAnimating::OnFizzled(void)
 	m_OnFizzled.FireOutput(this, this);
 }
 #endif
+
+#ifdef PORTAL2
+//
+//  F-STOP ("Aperture") photo placement query + capture callbacks
+//
+
+bool CBaseAnimating::CPhotoPlacementQuery::GetPlacementPosition_NoHelper( CaptureInfo_t &captureInfo,
+																		 CheckPlacementData_t &placementData,
+																		 Vector &positionOut,
+																		 QAngle &anglesOut )
+{
+	// Move one unit away from the hit surface
+	Vector vecTargetPos = placementData.Trace.endpos + placementData.Trace.plane.normal;
+	Vector vecOffset = vec3_origin;
+
+	// Six cardinal directions we'll look in
+	Vector vecDirections[6];
+	vecDirections[0] = Vector(  0,  0,  1 );
+	vecDirections[1] = Vector(  0,  0, -1 );
+	vecDirections[2] = Vector(  0,  1,  0 );
+	vecDirections[3] = Vector(  0, -1,  0 );
+	vecDirections[4] = Vector(  1,  0,  0 );
+	vecDirections[5] = Vector( -1,  0,  0 );
+
+	Vector vecObjectSize = captureInfo.hCapturedEnt->WorldAlignSize();
+
+	trace_t	tr;
+
+	// Account for our scaled size
+	for ( int i = 0; i < ARRAYSIZE( vecDirections ); i++ )
+	{
+		Ray_t ray;
+		ray.Init( vecTargetPos, vecTargetPos + ( vecDirections[i] * vecObjectSize[i/2] ) );
+		UTIL_Portal_TraceRay( ray, MASK_SOLID, NULL, COLLISION_GROUP_NONE, &tr );
+		vecOffset -= ( vecDirections[i] * vecObjectSize[i/2] * ( 1.0f - tr.fraction ) );
+	}
+
+	positionOut = vecTargetPos + vecOffset;
+
+	return true;
+}
+
+bool CBaseAnimating::MayBeCaptured( void )
+{
+	return m_bCanBeCaptured;
+}
+
+extern bool g_bAllOnCapturedChainedToBase;
+
+void CBaseAnimating::OnCaptured( void )
+{
+	// Store off our fire state
+	if ( IsOnFire() )
+	{
+		CBaseEntity *pEffect = GetEffectEntity();
+		pEffect->SetStasis( true );
+	}
+
+	// activator won't be valid in multiplayer
+	Assert( !GameRules()->IsMultiplayer() );
+	CBasePlayer* pPlayer = UTIL_GetLocalPlayer();
+	CBaseCombatWeapon* pCamera = pPlayer->GetActiveWeapon();
+	m_OnCameraCapture.FireOutput( pCamera, this );
+
+	g_bAllOnCapturedChainedToBase = true;
+}
+
+extern bool g_bAllOnReleasedChainedToBase;
+
+void CBaseAnimating::OnReleased( void )
+{
+	// Store off our fire state
+	if ( IsOnFire() )
+	{
+		CBaseEntity *pEffect = GetEffectEntity();
+		pEffect->SetStasis( false );
+	}
+	
+	// For debugging help
+	g_bAllOnReleasedChainedToBase = true;
+
+	// activator won't be valid in multiplayer
+	Assert( !GameRules()->IsMultiplayer() );
+	CBasePlayer* pPlayer = UTIL_GetLocalPlayer();
+	CBaseCombatWeapon* pPlacementWeapon = pPlayer->GetActiveWeapon();
+	m_OnCameraRelease.FireOutput( pPlacementWeapon, this );
+}
+
+bool CBaseAnimating::ShouldSavePhysics( void )
+{	
+	// Recreate physics on restore if we have been scaled
+	return ( m_flModelScale == 1.0f );
+}
+
+#endif // PORTAL2

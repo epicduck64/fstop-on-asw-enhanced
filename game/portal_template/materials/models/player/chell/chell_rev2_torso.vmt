@@ -1,4 +1,4 @@
-vertexlitgeneric
+"VertexLitGeneric"
 {
 $basetexture "models\player\chell\chell_torso_diffuse"
 $phongexponenttexture "models\player\chell\chell_torso_exponent"

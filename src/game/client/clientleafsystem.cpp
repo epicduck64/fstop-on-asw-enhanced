@@ -718,7 +718,10 @@ void CClientLeafSystem::RecomputeRenderableLeaves()
 			info.m_Flags &= ~RENDER_FLAGS_HASCHANGED;
 
 			CalcRenderableWorldSpaceAABB_Bloated( info, absMins, absMaxs );
-			if ( absMins != info.m_vecBloatedAbsMins || absMaxs != info.m_vecBloatedAbsMaxs )
+			// Viewmodels are drawn from the viewmodel list, not the BSP tree. If one is ever
+			// marked dirty, do not re-insert it into the tree (InsertIntoTree asserts on this).
+			if ( ( info.m_Flags & RENDER_FLAGS_RENDER_WITH_VIEWMODELS ) == 0 &&
+				 ( absMins != info.m_vecBloatedAbsMins || absMaxs != info.m_vecBloatedAbsMaxs ) )
 			{
 				// Update position in leaf system
 				RemoveFromTree( handle );
@@ -2751,7 +2754,11 @@ RenderGroup_t CClientLeafSystem::GenerateRenderListEntry( IClientRenderable *pRe
 			entryOut.m_InstanceData.m_nAlpha = nAlpha;
 			if ( !bIsTranslucent )
 				return RENDER_GROUP_OPAQUE;
-			return info.m_pAlphaProperty->IgnoresZBuffer() ? RENDER_GROUP_TRANSLUCENT_IGNOREZ : RENDER_GROUP_TRANSLUCENT;
+			// m_pAlphaProperty is optional (see the guarded ComputeRenderAlpha above) - a
+			// translucent renderable without one must not dereference it here.
+			if ( info.m_pAlphaProperty && info.m_pAlphaProperty->IgnoresZBuffer() )
+				return RENDER_GROUP_TRANSLUCENT_IGNOREZ;
+			return RENDER_GROUP_TRANSLUCENT;
 		}
 		iter = m_Renderables.Next( iter );
 	}

@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -2311,5 +2311,45 @@ const CUtlVector<CProp_Portal *> *CProp_Portal::GetPortalLinkageGroup( unsigned 
 bool CProp_Portal::IsFloorPortal(float fThreshold) const
 {
 	return m_PortalSimulator.GetInternalData().Placement.vForward.z > fThreshold;
+}
+
+//-----------------------------------------------------------------------------
+// F-STOP ("Aperture"): linkage IDs + portal resize (Portal 2 additions)
+//-----------------------------------------------------------------------------
+unsigned char UTIL_GetUnusedLinkageID( void )
+{
+	static unsigned char s_iBestGuessUnusedLinkageID = 0;
+
+	if ( s_PortalLinkageGroups[s_iBestGuessUnusedLinkageID].Count() == 0 )
+	{
+		// early out for best guess 
+		return s_iBestGuessUnusedLinkageID++;
+	}
+	else
+	{
+		// walk all linkage groups for a free one
+		for ( int i = 0; i < 256; ++i )
+		{
+			if ( s_PortalLinkageGroups[i].Count() == 0 )
+			{
+				s_iBestGuessUnusedLinkageID = i+1;
+				return i;
+			}
+		}
+	}
+
+	Warning( "*** All portal linkage IDs in use! ***\nThere may be >254 portal pairs, or some bug causing the linkage IDs not to be freed up.\n" );
+	Assert( 0 );
+	return PORTAL_LINKAGE_GROUP_INVALID;
+}
+
+void CProp_Portal::Resize( float fHalfWidth, float fHalfHeight )
+{
+	// F-STOP ("Aperture"): Portal 2 added runtime portal resizing. The Alien Swarm base does not
+	// carry the required support (network half-extents, CPortalSimulator::SetSize, and
+	// CPhysicsCloneArea::Resize), so runtime resizing is unavailable here and this is a no-op.
+	// Portal dimensions remain the fixed defaults (PORTAL_HALF_WIDTH / PORTAL_HALF_HEIGHT).
+	NOTE_UNUSED( fHalfWidth );
+	NOTE_UNUSED( fHalfHeight );
 }
 

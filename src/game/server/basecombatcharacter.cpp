@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Base combat character with no AI
 //
@@ -3608,4 +3608,54 @@ void CBaseCombatCharacter::OnNavAreaRemoved( CNavArea *removedArea )
 		ClearLastKnownArea();
 	}
 }
+
+#ifdef PORTAL2
+
+//-----------------------------------------------------------------------------
+// Purpose: Make creatures angry with the player when they're released
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::OnReleased( void )
+{
+	CBasePlayer *pPlayer = AI_GetSinglePlayer();
+	if ( pPlayer == NULL )
+		return;
+
+	// Hate him!
+	CAI_BaseNPC *pNPC = MyNPCPointer();
+	if ( pNPC == NULL )
+		return;
+
+	pNPC->ClearSchedule( "Released from camera" );
+
+	/*
+	pNPC->SetEnemy( pPlayer );
+	pNPC->UpdateEnemyMemory( pPlayer, pPlayer->GetAbsOrigin() );
+	*/
+
+	BaseClass::OnReleased();
+}
+
+//
+// Placement query
+//
+
+bool CBaseCombatCharacter::CPhotoPlacementQuery::GetPlacementPosition_NoHelper( CaptureInfo_t &captureInfo,
+																			   CheckPlacementData_t &placementData,
+																			   Vector &positionOut,
+																			   QAngle &anglesOut )
+{
+	anglesOut = vec3_angle;
+	anglesOut[YAW] = gpGlobals->curtime * 90.0f;
+
+	return SpacePlacement( captureInfo, placementData, vec3_angle, MASK_NPCSOLID, positionOut );
+}
+
+CameraInfo_ScaleData_t *CBaseCombatCharacter::CPhotoPlacementQuery::GetSimpleScales( void )
+{
+	static float s_DefaultScales[] = { 0.25f, 1.0f, 4.0f };
+	static CameraInfo_ScaleData_t simpleScales( s_DefaultScales, sizeof(s_DefaultScales)/sizeof(float) );
+	return &simpleScales;
+}
+
+#endif // PORTAL2
 

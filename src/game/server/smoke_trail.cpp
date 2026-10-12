@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -177,7 +177,10 @@ void SmokeTrail::FollowEntity( CBaseEntity *pEntity, const char *pAttachmentName
 
 //Data table
 IMPLEMENT_SERVERCLASS_ST(RocketTrail, DT_RocketTrail)
-	SendPropFloat(SENDINFO(m_SpawnRate), 8, 0, 1, 1024),
+	// Low bound widened from 1 to 0: the F-STOP android missile sets m_SpawnRate to 0 on purpose
+	// (it wants the flare only, no smoke), which the old range rejected with a per-update
+	// "Out-of-range value ... clamping" DataTable warning.
+	SendPropFloat(SENDINFO(m_SpawnRate), 8, 0, 0, 1024),
 	SendPropVector(SENDINFO(m_StartColor), 8, 0, 0, 1),
 	SendPropVector(SENDINFO(m_EndColor), 8, 0, 0, 1),
 	SendPropFloat(SENDINFO(m_ParticleLifetime), 16, SPROP_ROUNDUP, 0.1, 100),

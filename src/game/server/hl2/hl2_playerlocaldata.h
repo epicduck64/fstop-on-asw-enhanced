@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -44,6 +44,12 @@ public:
 	CNetworkVar( float, m_flFlashBattery );
 	CNetworkVar( Vector, m_vecLocatorOrigin );
 #endif
+
+#ifdef PORTAL2
+	// F-STOP ("Aperture")
+	CNetworkArray( int, m_nLocatorEntityIndices, 16 );
+	CNetworkVar( bool, m_bPlacingPhoto );
+#endif //PORTAL2
 
 	// Ladder related data
 	CNetworkVar( EHANDLE, m_hLadder );

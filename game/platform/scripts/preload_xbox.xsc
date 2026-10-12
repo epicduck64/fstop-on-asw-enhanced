@@ -1,8 +1,0 @@
-//
-// PRELOAD_XBOX.XSC
-//
-// Prevent or add specific resources to the preload
-// Syntax: <-/+> <resourcepath>
-// - Removes
-// + Adds
-//

@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -113,6 +113,9 @@ public:
 	void			Activate();
 	void			StartTask( const Task_t *pTask );
 
+	virtual bool	IsFrozen( void ) { return m_flFrozen >= 0.5f; }
+	virtual void	Freeze( float flFreezeAmount = -1.0f, CBaseEntity *pFreezer = NULL, Ray_t *pFreezeRay = NULL );
+	virtual void	Unfreeze();
 
 	void			BladesInit();
 	void			SoundInit( void );

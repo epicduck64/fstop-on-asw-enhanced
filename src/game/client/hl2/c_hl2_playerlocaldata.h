@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -44,6 +44,12 @@ public:
 #ifdef HL2_EPISODIC
 	float	m_flFlashBattery;
 	Vector	m_vecLocatorOrigin;
+#endif
+
+#ifdef PORTAL2
+	// F-STOP ("Aperture")
+	int		m_nLocatorEntityIndices[16];
+	bool	m_bPlacingPhoto;
 #endif
 
 	// Ladder related data
