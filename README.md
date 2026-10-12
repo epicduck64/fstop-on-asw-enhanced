@@ -43,14 +43,13 @@ asset errors that blocked the build and gameplay, and the engine-side additions 
   tick dereferenced it in `UTIL_FindPlacementHelper` (`info_placement_helper.cpp:208`,
   `captureInfo.hCapturedEnt->GetClassname()`), faulting at NULL + classname offset.
   **Solution:** invalidate the capture on the deletion event, and stop the deletion happening behind
-  the capture's back; also add a null check where it was missing, so no future path can dereference a
-  stale capture. Two hooks do the invalidation — `CAI_BaseNPC::Event_Killed` (NPCs, at death, before
-  the ragdoll) and `CBaseAnimating::UpdateOnRemove` (everything capturable, at removal) — both
+  the capture's back. Two hooks do the invalidation — `CAI_BaseNPC::Event_Killed` (NPCs, at death,
+  before the ragdoll) and `CBaseAnimating::UpdateOnRemove` (everything capturable, at removal) — both
   raising `UTIL_NotifyCapturedEntityDying` / `UTIL_NotifyCapturedEntityRemoved`, which clear the
-  watch armed at capture time in `CWeaponCamera::CaptureObject`. A chicken's `RadiusDamage`
-  (`npc_chicken.cpp:488`) also ignored stasis and could kill the hidden entity, so it now skips
-  `IsInStasis()` targets; `UTIL_FindPlacementHelper` null-guards the handle; and
-  `CustomDataGetScaleForStep` (`photo.cpp:428`) bounds-checks its scale step.
+  watch armed at capture time in `CWeaponCamera::CaptureObject`. That invalidation is the fix, and it
+  is what keeps the dead handle unreachable: the dereference sites themselves are unchanged from the
+  leak — `UTIL_FindPlacementHelper` (`info_placement_helper.cpp:208`) and
+  `CustomDataGetScaleForStep` (`photo.cpp:428`) are byte-identical to it.
 - **A pickable `item_photo` whose target was removed.** The same failure through a different entry
   point: the photo item stored its target in `m_captureInfo` but never armed the watch, so removing
   the target left a null handle while the photo count stayed non-zero — placing it crashed the same
@@ -162,12 +161,15 @@ asset errors that blocked the build and gameplay, and the engine-side additions 
 - **The zombie's rise out of the ground.** `npc_zombie.cpp` declared `InputRiseFromGround` and nothing
   else — no input-table entry, no handler — so the `RiseFromGround` the tombstone (and the android
   dispenser) sends to the NPC it drops did nothing on a zombie, which popped into place where it stood
-  instead of climbing out of the floor. The animations were already in the shipped set
-  (`graveyard_riseup` and `facedown_rise`, in `zombie_animations.mdl` which `classic.mdl` includes),
-  but neither carries an activity tag, so the rise looks them up by name. The input now sets a
-  condition and `SCHED_ZOMBIE_RISE_FROM_GROUND` runs `TASK_ZOMBIE_RISE_FROM_GROUND`, which stops
-  movement and plays the sequence until it finishes — the same shape as the android's
-  `InputRiseFromGround` → `SCHED_ANDROID_RISE` chain.
+  instead of climbing out of the floor. The animation was already in the shipped set
+  (`graveyard_riseup`, in `zombie_animations.mdl` which `classic.mdl` includes) but carried **no
+  activity tag** — and the rig lives in that included model, where `CStudioHdr::GetNumSeq()`
+  (local sequences only) means `LookupSequence` can never find it by name. Activities are the route
+  that crosses into an included model, which is how the zombie's own `ACT_IDLE`/`ACT_WALK` reach
+  theirs, so the sequence was tagged `ACT_ZOMBIE_RISE_FROM_GROUND` (QC + recompile; the animation data
+  came back byte-identical — only the tag was added) and the input now sets a condition that runs
+  `SCHED_ZOMBIE_RISE_FROM_GROUND` → `TASK_PLAY_SEQUENCE ACTIVITY:ACT_ZOMBIE_RISE_FROM_GROUND`, the
+  same shape as the android's `InputRiseFromGround` → `SCHED_ANDROID_RISE` chain.
 
 ### Assets
 
@@ -256,6 +258,12 @@ asset errors that blocked the build and gameplay, and the engine-side additions 
 > Games are found automatically through Steam, wherever they are installed —
 > including across multiple Steam libraries on different drives. This means
 > that you **must** own the game on Steam, and have them installed.
+
+> **CS:GO must come from its beta branch, not CS2.** Valve still offers CS:GO through CS2, whose content
+> does not include the files the picks ask for. In Steam, open **CS2**'s *Properties → Betas* and
+> select the **`csgo`** branch — **not `csgo_legacy`**, which is typically the first entry in
+> the list and easy to pick by mistake. The handful of CS:GO files in `tools/retail_picks.txt` may
+> not resolve otherwise.
 
 ---
 
