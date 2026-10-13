@@ -27,10 +27,17 @@ The port is not a pure implementation of the source leak. It includes targeted f
 ### Gameplay and Build Fixes
 
 - **Weapon switching:** Fix placement-tool ownership, server/client registration, auto-switch settings, deployment checks, and weapon-wheel slots.
+- **Camera HUD indicators:** The camera's state indicators (viewfinder / holding-a-photo), driven by `weapon_camera`, position themselves by offsetting the HUD panel's bounds. Enhanced Source re-seats HUD panels at the screen origin while painting, so that offset is discarded and the row renders at the top of the screen. The panel is now full-screen and the row position is computed in screen space, reproducing the leak's placement.
 - **Photo previews:** Use the correct studio-model renderable type.
 - **Zombie spawning:** Recheck ground material when the tombstone's spawn timer fires.
 - **MSVC compatibility:** Fix obsolete `<typeinfo.h>` includes, legacy warning-as-error failures, `_msize_base` exception specifications, and stale VPC project CRCs.
 - **Debug assertions:** Correct assertions triggered by valid initialization states while retaining useful diagnostics.
+
+### Console Errors
+
+- **Zero-force damage:** `CPortal_Player::Event_Killed` stamps `m_vecTotalBulletForce` only when it is non-zero, so `AddMultiDamage` no longer warns on every player death.
+- **Truncated materials:** Repair two Valve materials that were missing their closing brace (`particle/particle_ring_wave_12`, `signage/warehouse_sign_01`), which the material system reported as parse errors.
+- **Missing precaches:** Add the sound precaches the ported NPCs and props emit at load, so they resolve rather than being reported missing on first use.
 
 ### Engine Additions
 
@@ -40,11 +47,15 @@ The port is not a pure implementation of the source leak. It includes targeted f
 - **Player inventory and UI:** Extend `CPortal_Player` with photo inventory management, selection and placement state, inventory notifications, HUD effects, and locator updates.
 - **Freeze/ice support:** Enable the previously disabled `EntityFreezing` implementation and add supporting frozen-state behavior for manhacks, antlion guards, and dropships. This is EP3 code, but remains to mirror a build of F-STOP.
 - **Camera controls:** Add mouse-wheel command handling and bindings for zoom and captured-object resizing. Align camera defaults with FGD settings and supply the missing weapon scripts.
+- **Depth of field:** The camera's DoF is gated on float HDR — `IsDepthOfFieldEnabled` requires `HDR_TYPE_FLOAT`, and level `2` stays on integer HDR. The supplied run scripts pass `+mat_hdr_level 3`; a custom launch script needs the same flag or the effect will not appear.
 
 ### Assets and Animation
 
 - Restore the zombie's rise-from-ground input, schedule, and activity mapping so included-model animations can be found and played.
 - Repair zombie walk roots, ragdoll sequences, physics constraints, and surface properties.
+- **Zombie model and IK:** `npc_zombie` uses `models/zombie/new_zombie.mdl`, whose foot IK chains carry the knee-direction vectors (`mstudioiklink_t::kneeDir`, `0.7070, -0.7070, 0`). The leak's copy of that model has them zeroed, which leaves the IK solver without a bend plane. The engine's `npc_height_adjust` IK test mode is off by default: it feeds a recursive filter into the rendered origin, which on a rig whose root bone translates makes the model climb on every ground-contact window.
+- **Tombstone prop:** The substitute model is Half-Life 2's `gravestone_cross001a` with its origin rebased to the foot of the cross, so the prop stands on the ground. `SOLID_BBOX` is used because the substitute ships no collision hull of its own.
+- **First-launch stall:** Ship the engine's sound caches (`maps/soundcache/_master.cache`, `modelsounds.cache`) so a fresh clone does not pay the one-off multi-minute scan of every sound in the mount. They contain relative paths only.
 - Resolved missing particle materials, sound manifests, localization resources, and Android missile effects.
 
 ### Existing Engine Systems Reused
@@ -121,13 +132,14 @@ tools/                 Build and asset scripts
 
 The repository supplies `game/portal_template/`, `diffs/`, `src/`, and `tools/`. You supply the required game content and engine folders; `game/retail/` is generated locally.
 
-Mount priority:
+Mount priority, as declared in `game/portal_template/GameInfo.txt`:
 
 ```text
-portal_template > core > platform > p2-2009/* > retail
+portal_template > core > platform > p2-2009/portal2_tempcontent >
+                  p2-2009/portal2 > p2-2009/portal > p2-2009/hl2 > retail
 ```
 
-Higher-priority content overrides lower-priority content.
+Higher-priority content overrides lower-priority content. Note that `portal2_tempcontent` is mounted *before* `portal2`, so it wins where the two provide the same path.
 
 ## Tools
 
@@ -136,12 +148,20 @@ Higher-priority content overrides lower-priority content.
 | `tools/setup.bat` | Runs asset generation and retail mount setup |
 | `tools/build_mounts.bat` | Extracts selected retail content into `game/retail/` |
 | `tools/generate_assets.bat` | Restores overrides from `diffs/` to `portal_template/` |
-| `tools/generate_diffs.bat` | Updates `diffs/` from `portal_template/` (maintainers) |
+| `tools/generate_diffs.bat` | Rebuilds `diffs/` from `portal_template/` (maintainers) |
 | `tools/clean_mod.bat` | Removes mod files duplicated by mounted content |
 
 `build_mounts.bat`, `clean_mod.bat`, and `generate_diffs.bat` support `-DryRun`. `generate_assets.bat` does not.
 
-Only project differences are tracked. `generate_diffs.bat` records changes, and `generate_assets.bat` restores them without including Valve's game content in the repository.
+### How `generate_diffs` decides what ships
+
+`generate_diffs` reads the mount order from `game/portal_template/GameInfo.txt` and, for each file in `portal_template/`, compares it against the **first mount that provides that path** — the copy the engine would actually serve. A file identical to that copy is not an override and is left out. A file that differs, or that no mount provides at all, is copied into `diffs/`.
+
+Resolving against the first mount, rather than a fixed tree, matters when two mounts ship different files under the same path: the base is then whatever the game really serves, so the override is recorded correctly.
+
+The mod's own mount and the engine mounts (`core`, `platform`) are never used as comparison bases — the diff describes `portal_template` against the game content it is layered over.
+
+**Each entry in `diffs/` is a complete copy of the project's version of that asset, not a binary patch.** The tool computes which files differ; the files themselves are stored whole. `generate_assets.bat` copies them back into `portal_template/`, so the repository stays usable without carrying Valve's game content. `-ApplyIgnore` writes the matching `.gitignore` block for the paths `diffs/` carries; `-GameInfo` and `-SkipMounts` override where the mount order is read from and which mounts are treated as bases.
 
 ## Hammer
 
