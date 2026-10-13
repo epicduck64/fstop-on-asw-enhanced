@@ -1,4 +1,3 @@
-console.log.prev
 materials/effects/wispy_smoke.vtf
 materials/particle/particle_smokegrenade.vtf
 materials/particle/rain.vtf

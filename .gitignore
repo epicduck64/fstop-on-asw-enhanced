@@ -83,9 +83,10 @@ GameConfig.txt
 /src/game/client/Release*/
 /src/game/server/Debug*/
 /src/game/server/Release*/
+/src/materialsystem/shaderlib/Release*/
 
 # --- runtime junk ---
-/game/portal_template/console*.log
+/game/portal_template/console*
 /game/portal_template/*.tmp
 /game/portal_template/*.dt
 /game/portal_template/SAVE/

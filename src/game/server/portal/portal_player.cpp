@@ -1734,7 +1734,15 @@ void CPortal_Player::Event_Killed( const CTakeDamageInfo &info )
 {
 	//update damage info with our accumulated physics force
 	CTakeDamageInfo subinfo = info;
-	subinfo.SetDamageForce( m_vecTotalBulletForce );
+	// Only overwrite the force when shots actually accumulated one. A death with no bullet
+	// force behind it - a fall, a crush, a physics kill - would otherwise stamp a zero vector
+	// over the force that killed the player, and AddMultiDamage reports that as a zero-force
+	// physics damage ("something called TakeDamage with a type that needs a force and gave
+	// none") when the damage type plainly did carry one.
+	if ( !m_vecTotalBulletForce.IsZero() )
+	{
+		subinfo.SetDamageForce( m_vecTotalBulletForce );
+	}
 
 	// show killer in death cam mode
 	// chopped down version of SetObserverTarget without the team check

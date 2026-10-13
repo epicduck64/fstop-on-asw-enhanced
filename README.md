@@ -235,6 +235,43 @@ asset errors that blocked the build and gameplay, and the engine-side additions 
 
 ---
 
+### Asserts
+
+Most of the asserts that fire in normal play are patched, but the goal is a **clear console**, not a muted
+one — and every one of these is a deviation from the leak, so each is either a real fix or a documented
+relaxation.
+
+Two things make the picture simpler than the raw firing counts suggest:
+
+- **`Assert` is a debug macro.** It exists only under `DBGFLAG_ASSERT` (`public/tier0/dbg.h:179`), so a
+  release build emits none of this at all. What a release build *does* still print is `Warning` / `Msg` /
+  `DevMsg` — and the loudest of those is gone because its cause was fixed, not silenced: the
+  `Bad sequence (-1 out of 32 max) ... 'player.mdl'` flood came from `C_BaseAnimating::SetSequence`
+  deriving ground speed and sequence flags from a `GetSequence()` of `-1` while the local player was still
+  initialising.
+- **The remaining asserts are largely `_DEBUG`-gated**, and the ones that are not are genuine conditions
+  the port did not introduce — `baseentity.h:2679/2680` (collision-bounds queries where the callee requires
+  world-aligned, entity-space-independent bounds) and `photo.cpp:428/433` (the camera's scale-step table,
+  byte-identical to the leak). Those are deliberately left visible: with them in the log, a debug build is
+  still worth reading rather than something to filter out.
+
+Where an assert was firing on a **legal** state, it was split or gated rather than deleted, so it keeps its
+signal:
+
+| assert | what it was reporting | what it does now |
+|---|---|---|
+| `C_BaseAnimating::SetSequence` | `pSeqdesc` asserted on a `-1` sequence before the local player had one | the sequence-derived block is skipped when the sequence is invalid; the accessor clamped the index anyway |
+| `ragdoll_shared.cpp:301/321` | a `Warning` about "solid count exceeds maximum" that also covered a **null** `pCollide` | split — a null `pCollide` (a model with no `.phy`; Chell's player model ships without one) is its own `_DEBUG`-gated assert, so a missing `.phy` no longer reads as an asset error |
+| `c_baseanimating.h:785` | `AssertOnce` on the modeldata cache not being frame-locked | checked only once a hdr is held, which is when the invariant can hold |
+| `usermessages.cpp:133` | `ASSERT_LOCAL_PLAYER_RESOLVABLE()` on a hook registered before the player exists | dropped — the engine's own `SPLIT_SCREEN_STUBS` configuration compiles this assert out for the same reason |
+
+The supporting engine changes are small and local — scale invalidation in `c_baseanimating.cpp`, angle
+invalidation in `c_baseentity.cpp`, linkage-group idempotency in `prop_portal.cpp`, and a zero-force
+early-out in `baseentity.cpp`'s damage path. The F-STOP source itself is left as the leak wrote it, so the
+tree stays something to develop on rather than a rewritten base.
+
+---
+
 ## Requirements
 
 | requirement | why |
@@ -391,6 +428,13 @@ three paths Hammer keeps outside git — all of which go stale if the tree moves
   upstream's `LICENSE` and `thirdpartylegalnotices.txt`. `diffs/` carries assets only: `*.dll`,
   `*.exe`, `*.pdb` and everything under a `bin/` folder are excluded, because building `src/`
   reproduces them.
+* **Text-based overrides ship through git, not `diffs/`.** Maps and text definitions — `*.txt`,
+  `*.vmt`, `*.res`, `*.vmf`, `*.ain`, `cfg/`, `maps/` — only describe where assets are and what their
+  properties are, so they are tracked as source rather than carried as assets. `generate_diffs.ps1`'s
+  `-KeepTracked` list draws that line, and `scripts/game_sounds_player.txt` is the live example: it is
+  the leak's HL2 player-sound block, shipped so it mounts above the leak's Portal 2 copy, whose own
+  `game_sounds_player.txt` carries only two of the ten `HL2Player.*` entries. Console output
+  (`console*`, including the `console.log.prev` a rotated run leaves) is excluded from both sides.
 * **Not shipped:** `game/p2-2009/` and `game/retail/` are gitignored. The
   `p2-2009` folder ships present but empty, so each build supplies its own copy
   of depot `852_0`. `game/portal_template/`'s binary assets are also gitignored —

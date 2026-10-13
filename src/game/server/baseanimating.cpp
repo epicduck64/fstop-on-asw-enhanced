@@ -1859,7 +1859,10 @@ ConVar ai_setupbones_debug( "ai_setupbones_debug", "0", 0, "Shows that bones tha
 
 
 
-inline bool CBaseAnimating::CanSkipAnimation( void )
+// Not inline: this is called from other translation units (ai_baseactor.cpp), and an inline
+// definition in a .cpp only emits a symbol when the compiler declines to inline it. /Od does,
+// /O2 does not, so a Release build failed to link it (LNK2019 from ai_baseactor.obj).
+bool CBaseAnimating::CanSkipAnimation( void )
 {
 	if ( !sv_pvsskipanimation.GetBool() )
 		return false;

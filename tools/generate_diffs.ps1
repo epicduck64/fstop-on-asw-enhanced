@@ -25,7 +25,7 @@ param(
     [string]$DiffDir  = 'diffs',
     [string[]]$LeakTrees = @('portal2','portal2_tempcontent','portal','hl2'),
     # build outputs and runtime junk must never enter the patch set
-    [string[]]$ExcludeExt = @('.pdb','.dll','.exe','.lib','.obj','.exp','.ilk','.idb','.tlog','.map','.bak','.log','.tmp','.dt','.sav','.cache'),
+    [string[]]$ExcludeExt = @('.pdb','.dll','.exe','.lib','.obj','.exp','.ilk','.idb','.tlog','.map','.bak','.log','.prev','.tmp','.dt','.sav','.cache'),
     [string[]]$ExcludeDirs = @('bin','SAVE','screenshots','soundcache'),
     # Files that ship through git rather than diffs\: config/scripts, plus maps
     # and text-based definitions. Maps and text files only describe where assets
@@ -74,6 +74,8 @@ foreach ($f in (Get-ChildItem $modDir -Recurse -File -ErrorAction SilentlyContin
     $rel = $f.FullName.Substring($modDir.Length+1).Replace('\','/')
     $key = $rel.ToLowerInvariant()
     if ($ExcludeExt -contains $f.Extension.ToLowerInvariant()) { continue }
+    # console output never ships: console.log, and the console.log.prev a rotated run leaves
+    if ($f.Name -like 'console*') { continue }
     $skip = $false
     foreach ($d in $ExcludeDirs) { if ($rel -match "(^|/)$([regex]::Escape($d))/") { $skip = $true; break } }
     if ($skip) { continue }
