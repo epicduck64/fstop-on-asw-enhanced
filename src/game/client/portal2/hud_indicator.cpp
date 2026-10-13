@@ -305,10 +305,12 @@ void CHudControlHelper::ApplySchemeSettings( vgui::IScheme *scheme )
 	SetPaintBackgroundEnabled( false );
 	SetPaintBorderEnabled( false );
 
-	int nCenterY = (float) ScreenHeight() * 0.8f;
-
-	// We want to take over the lower half of the screen, roughly
-	SetBounds( 0, nCenterY-HELPER_ICON_HEIGHT, ScreenWidth(), HELPER_ICON_HEIGHT*2 );
+	// ASW / Enhanced Source does not honour this panel's own position: the HUD paint path
+	// re-seats it at the screen origin every frame, so the leak's SetBounds offset is lost and
+	// the icon row ends up at the top of the screen. Take the origin the engine actually gives
+	// us (full screen) and fold the leak's vertical offset into the row position in Paint.
+	// Visual result is the same as the leak.
+	SetBounds( 0, 0, ScreenWidth(), ScreenHeight() );
 }
 
 //-----------------------------------------------------------------------------
@@ -386,7 +388,12 @@ void CHudControlHelper::Paint( void )
 	}
 
 	int iconCenterX = ( GetWide() / 2.0f );
-	int iconY = ((float) GetTall() * 0.8f) - HELPER_ICON_HEIGHT;
+
+	// The leak puts the panel at ScreenHeight()*0.8 - HELPER_ICON_HEIGHT and the row at
+	// GetTall()*0.8 - HELPER_ICON_HEIGHT inside it. This panel is full screen here, so fold
+	// both offsets into a single screen-space row position to reproduce the same placement.
+	int iconY = (int)( (float)ScreenHeight() * 0.8f ) - HELPER_ICON_HEIGHT
+	          + (int)( (float)(HELPER_ICON_HEIGHT * 2) * 0.8f ) - HELPER_ICON_HEIGHT;
 	
 	// Don't move when scaling up
 	float flMoveScale = ( bScalingUp ) ? 1.0f : flGlobalScale;

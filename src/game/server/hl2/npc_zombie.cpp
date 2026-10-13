@@ -242,7 +242,7 @@ void CZombie::Precache( void )
 {
 	BaseClass::Precache();
 
-	PrecacheModel( "models/zombie/classic.mdl" );
+	PrecacheModel( "models/zombie/new_zombie.mdl" );
 	PrecacheModel( "models/zombie/classic_torso.mdl" );
 	PrecacheModel( "models/zombie/classic_legs.mdl" );
 
@@ -502,7 +502,7 @@ const char *CZombie::GetTorsoModel( void )
 void CZombie::SetHeadlessModel( void )
 {
 	SetModel("");
-	CreateRagGib( "models/zombie/classic.mdl", GetLocalOrigin(), GetLocalAngles(), GetLocalVelocity(), 0, ShouldIgniteZombieGib() );
+	CreateRagGib( "models/zombie/new_zombie.mdl", GetLocalOrigin(), GetLocalAngles(), GetLocalVelocity(), 0, ShouldIgniteZombieGib() );
 }
 //---------------------------------------------------------
 //---------------------------------------------------------
@@ -517,7 +517,7 @@ void CZombie::SetZombieModel( void )
 	}
 	else
 	{
-		SetModel( "models/zombie/classic.mdl" );
+		SetModel( "models/zombie/new_zombie.mdl" );
 		SetHullType( HULL_HUMAN );
 	}
 // We don't want a headcrab

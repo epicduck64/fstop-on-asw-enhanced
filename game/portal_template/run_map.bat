@@ -28,5 +28,5 @@ if not exist "maps\%MAP%.bsp" (
 	echo.
 )
 
-@"../swarm.exe" -sw -w 1280 -h 720 -dev -condebug -override_vpk -allowdebug +mat_hdr_level 3 -game portal_template +map %MAP%
+@"../swarm.exe" -sw -w 1280 -h 720 -dev -condebug -override_vpk -allowdebug -noasserts +mat_hdr_level 3 -game portal_template +map %MAP%
 endlocal

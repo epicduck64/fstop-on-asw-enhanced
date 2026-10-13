@@ -48,8 +48,8 @@
 			// Portal 2 2009 assets (the leak copy), mounted DIRECTLY, before
 			// retail. Nothing is copied out of them. Contents are gitignored:
 			// the folder ships empty and each player drops their own copy in.
-			Game			p2-2009/portal2
 			Game			p2-2009/portal2_tempcontent
+			Game			p2-2009/portal2
 			Game			p2-2009/portal
 			Game			p2-2009/hl2
 

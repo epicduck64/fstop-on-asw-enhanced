@@ -1,18 +1,24 @@
 # generate_diffs.ps1 - express the project's asset overrides.
 #
-# A portal_template file is an OVERRIDE only if it differs from what the mounts
-# actually serve for that path. The served copy is the highest-priority provider:
-#   portal_template > core/platform (never diffed against - engine content)
-#   leak trees      > game/retail
-# so the base for a given path is the leak copy if the leak has it, otherwise the
-# retail copy. That is what makes assets like the tombstone work: the leak has no
-# copy, retail does, so it diffs against retail.
+# A portal_template file is an OVERRIDE only if it differs from what the game
+# would actually mount for that path. The mount order is read from GameInfo.txt
+# (SearchPaths, in file order) and the base for a path is the FIRST mount that
+# provides it - which is how the engine itself resolves a lookup. Diffing against
+# a fixed tree instead mislabels an override whenever two mounts ship different
+# files under the same path, because the base is then a file the game never
+# serves.
 #
-# Files identical to their served copy are not overrides at all -> not shipped.
-# Files that differ (or have no counterpart anywhere) are copied verbatim into
-# diffs\, binary. Shipping the repo is: run this, commit diffs\.
+# Files identical to that first-mounted copy are not overrides -> not shipped.
+# Files that differ, or that no mount provides at all, are copied verbatim into
+# diffs\. Shipping the repo is: run this, commit diffs\.
 #
-# Fast: hash the served copy only for paths that exist in portal_template.
+# The diff describes portal_template against the game content it is layered over,
+# so the mod's own mount (|gameinfo_path|) and the engine mounts (core, platform)
+# are never used as bases. Retail is generated to provide no path that
+# portal_template, core, platform or the leak already provide, so excluding them
+# keeps this consistent with the mount it is compared against.
+#
+# Fast: only the mount that actually serves each path is hashed.
 #
 # tools/generate_diffs.bat [-DryRun]
 
@@ -21,6 +27,10 @@ param(
     [string]$RepoRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$LeakAssets = '',
     [string]$ModPath  = 'game\portal_template',
+    # authoritative mount order; empty -> <modDir>\GameInfo.txt
+    [string]$GameInfo = '',
+    # never used as a diff base: the mod itself, and the engine's own mounts
+    [string[]]$SkipMounts = @('core','platform'),
     [string]$RetailMount = 'game\retail',
     [string]$DiffDir  = 'diffs',
     [string[]]$LeakTrees = @('portal2','portal2_tempcontent','portal','hl2'),
@@ -49,24 +59,57 @@ if (-not $LeakAssets) { $LeakAssets = Join-Path $RepoRoot 'game\p2-2009' }
 if (-not (Test-Path $LeakAssets)) { throw "Leak assets not found: $LeakAssets" }
 $LeakAssets = (Resolve-Path $LeakAssets).Path
 
-# base lookups, in priority order: leak first, then the retail mount.
-# path (lowercase) -> file on disk, first writer wins.
-$base = @{}
-$baseDirs = New-Object System.Collections.ArrayList
-foreach ($t in $LeakTrees) {
-    $d = Join-Path $LeakAssets $t
-    if (Test-Path $d) { [void]$baseDirs.Add($d) }
+# --- mount order, straight out of GameInfo.txt -------------------------------
+# SearchPaths lists the Game mounts in resolution order. The base for a path is
+# the first mount that provides it, so an override is diffed against the copy the
+# game would really serve. Entries using |gameinfo_path| are the mod itself (the
+# files being diffed live there) and are skipped.
+if (-not $GameInfo) { $GameInfo = Join-Path $modDir 'GameInfo.txt' }
+$gameRoot = Split-Path -Parent $modDir
+$mounts = New-Object System.Collections.ArrayList
+if (Test-Path -LiteralPath $GameInfo) {
+    $inSearch = $false
+    foreach ($line in [IO.File]::ReadAllLines($GameInfo)) {
+        $t = $line.Trim()
+        if (-not $inSearch) { if ($t -match '^SearchPaths$') { $inSearch = $true }; continue }
+        if ($t -eq '}') { break }
+        if ($t -match '^Game\s+(.+)$') { [void]$mounts.Add($Matches[1].Trim()) }
+    }
+    if ($mounts.Count -eq 0) { throw "no Game mountpoints found in $GameInfo" }
+    Write-Host ("mount order (GameInfo): {0}" -f ($mounts -join ' > '))
+} else {
+    Write-Host "note: no GameInfo.txt - falling back to leak trees + retail" -ForegroundColor Yellow
+    foreach ($t in $LeakTrees) { [void]$mounts.Add("p2-2009/$t") }
+    [void]$mounts.Add('retail')
 }
-if (Test-Path $retailDir) { [void]$baseDirs.Add($retailDir) }
-else { Write-Host "note: no $RetailMount yet - run build_mounts first for retail-sourced bases" -ForegroundColor Yellow }
 
+$baseDirs = New-Object System.Collections.ArrayList
+foreach ($mp in $mounts) {
+    # the mod's own mount is where the files being diffed live; core/platform are
+    # engine content. Neither is a base - the diff is portal_template vs the game
+    # content mounts only.
+    if ($mp -like '*|gameinfo_path|*') { continue }
+    $p = $mp.Replace('\','/')
+    if ($SkipMounts -contains $p) { continue }
+    if ($p -like 'p2-2009/*')     { $d = Join-Path $LeakAssets $p.Substring(8) }
+    elseif ($p -eq 'retail')      { $d = Join-Path $RepoRoot $RetailMount }
+    else                          { $d = Join-Path $gameRoot $p }
+    if (Test-Path -LiteralPath $d) { [void]$baseDirs.Add($d) }
+    else { Write-Host ("note: mount not present, skipped: {0}" -f $p) -ForegroundColor Yellow }
+}
+Write-Host ("diff bases: {0}" -f (($baseDirs | ForEach-Object { $_.Substring($RepoRoot.Length+1) }) -join ' > '))
+if (-not (Test-Path -LiteralPath $retailDir)) { Write-Host ("note: no {0} yet - run build_mounts first for retail-sourced bases" -f $RetailMount) -ForegroundColor Yellow }
+
+# path (lowercase) -> file on disk; first mount to provide it wins, so a later
+# mount can never displace the copy the game actually serves.
+$base = @{}
 foreach ($d in $baseDirs) {
     foreach ($f in (Get-ChildItem $d -Recurse -File -ErrorAction SilentlyContinue)) {
         $rel = $f.FullName.Substring($d.Length+1).Replace('\','/').ToLowerInvariant()
         if (-not $base.ContainsKey($rel)) { $base[$rel] = $f.FullName }
     }
 }
-Write-Host ("base files (leak + retail): {0:N0}" -f $base.Count)
+Write-Host ("base files (first occurrence per path): {0:N0}" -f $base.Count)
 
 $same = 0; $written = 0; $bytes = 0L
 $manifest = New-Object System.Collections.ArrayList
