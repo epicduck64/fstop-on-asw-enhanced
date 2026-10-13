@@ -96,13 +96,25 @@ GameConfig.txt
 /game/portal_template/SAVE/
 /game/portal_template/stats.txt
 /game/portal_template/tilegen_log.txt
-/game/portal_template/modelsounds.cache
+/game/portal_template/demoheader.tmp
 # engine runtime state - the game rewrites this on launch
 /game/portal_template/cfg/config.cfg
+# Per-machine video settings (resolution, AA, aniso). The engine does not recreate this on
+# launch, so a fresh clone just runs at engine defaults until the user sets them - preferable
+# to shipping one machine's resolution as everyone's default, and it stops the file churning
+# on every run.
+/game/portal_template/cfg/video.txt
 /game/portal_template/voice_ban.dt
-/game/portal_template/maps/soundcache/
 /game/portal_template/screenshots/
 /game/portal_template/cfg/*.bak
+
+# NOT ignored on purpose: maps/soundcache/ and modelsounds.cache ship with the repo.
+# These are what the engine builds on a first launch - it walks every .wav in the mount
+# set (~16.5k of them) and hashes each one, and that build is the multi-minute freeze a
+# fresh clone otherwise pays exactly once. Together they are 2.3 MB and contain no
+# machine-specific data, only relative sound and model paths, so they are safe to carry.
+# If the sound set later changes the engine detects the mismatch and rebuilds, so a stale
+# copy costs nothing beyond the rebuild it was there to avoid.
 
 # --- Source engine crash dumps (minidumps written on a hard crash) ---
 *.mdmp
