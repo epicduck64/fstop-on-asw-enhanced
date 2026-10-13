@@ -4118,6 +4118,14 @@ void C_BaseEntity::SetAbsAngles( const QAngle& absAngles )
 	InvalidatePhysicsRecursive( ANGLES_CHANGED );
 	RemoveEFlags( EFL_DIRTY_ABSTRANSFORM );
 
+	// Render bounds go through TransformAABB with the render angles
+	// (DefaultRenderBoundsWorldspace, clientleafsystem.cpp:487), so a pure rotation
+	// moves the world AABB. Without this the leaf system keeps the pre-rotation box and
+	// clientleafsystem.cpp:2423/2424 asserts - the CAI_BaseNPC case the LEAFDBG probe
+	// caught (turning on the spot, bounds off by 9.7/48.7 units). Physics alone was
+	// already invalidated above.
+	MarkRenderHandleDirty();
+
 	m_angAbsRotation = absAngles;
 	AngleMatrix( absAngles, m_rgflCoordinateFrame );
 	MatrixSetColumn( m_vecAbsOrigin, 3, m_rgflCoordinateFrame ); 

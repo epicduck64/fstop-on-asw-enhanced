@@ -764,7 +764,11 @@ void CRagdollProp::InitRagdoll( const Vector &forceVector, int forceBone, const 
 		}
 	}
 
-	if ( activateRagdoll )
+	// Only activate a ragdoll that was actually created. RagdollCreate bails when the model has
+	// no collision model - the Chell player model ships without a .phy - leaving listCount at
+	// zero and pCollide null, and there is nothing to activate in that case. Calling through
+	// anyway trips the Assert(pCollide) in RagdollSetupCollisions.
+	if ( activateRagdoll && m_ragdoll.listCount && params.pCollide )
 	{
 		MEM_ALLOC_CREDIT();
 		RagdollActivate( m_ragdoll, params.pCollide, GetModelIndex(), bWakeRagdoll );

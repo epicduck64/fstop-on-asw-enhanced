@@ -1,4 +1,4 @@
-VertexLitGeneric
+"VertexLitGeneric"
 {
 $basetexture "models\player\chell\chell_hair"
 $halflambert 1

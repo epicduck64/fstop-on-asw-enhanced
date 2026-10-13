@@ -1,3 +1,12 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Binary game assets are deliberately NOT tracked in git: they are gitignored and
+# delivered by diffs\ (written by tools\generate_diffs.bat). No Git LFS filters are
+# declared here - doing so would require every consumer to install git-lfs, and it
+# would turn the maps and .vmt text definitions we do track into LFS pointers.
+
+# --- upstream (Enhanced Source) classification, kept verbatim ---
 creategameprojects text
 createallprojects text
 xcode_ccache_wrapper text
@@ -48,3 +57,4 @@ protoc binary
 ccache binary
 
 *.txt binary
+

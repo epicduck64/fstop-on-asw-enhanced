@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements the zombie, a horrific once-human headcrab victim.
 //
@@ -360,7 +360,9 @@ bool CNPC_BaseZombie::FindNearestPhysicsObject( int iMaxMass )
 			continue;
 
 		vcollide_t *pCollide = modelinfo->GetVCollide( pList[i]->GetModelIndex() );
-		
+		if ( pCollide == NULL )
+			continue;
+
 		Vector objMins, objMaxs;
 		physcollision->CollideGetAABB( &objMins, &objMaxs, pCollide->solids[0], pList[i]->GetAbsOrigin(), pList[i]->GetAbsAngles() );
 
@@ -2022,7 +2024,7 @@ void CNPC_BaseZombie::GatherConditions( void )
 		// between him and the object he's heading for already. 
 		if( gpGlobals->curtime >= m_flNextSwatScan && (m_hPhysicsEnt == NULL) )
 		{
-			FindNearestPhysicsObject( ZOMBIE_MAX_PHYSOBJ_MASS );
+			FindNearestPhysicsObject( ZOMBIE_MAX_PHYSOBJ_MASS * GetModelScale() );
 			m_flNextSwatScan = gpGlobals->curtime + 2.0;
 		}
 	}

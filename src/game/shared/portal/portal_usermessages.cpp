@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -52,4 +52,12 @@ void RegisterUserMessages()
 	//new stuff for portal
 	usermessages->Register( "EntityPortalled", sizeof( long ) + sizeof( long ) + sizeof( Vector ) + sizeof( QAngle ) ); //something got teleported through a portal
 	usermessages->Register( "KillCam", -1 );	
+
+#ifdef PORTAL2
+	usermessages->Register( "InventoryFlash", sizeof( float ) + 1 );
+	usermessages->Register( "IndicatorFlash", sizeof( float ) + 1 );
+	usermessages->Register( "ControlHelperAnimate", 2 );
+	usermessages->Register( "TakePhoto", sizeof( long ) + sizeof( uint8 ) );
+	usermessages->Register( "Flash", sizeof( float ) + sizeof( Vector ) );
+#endif // PORTAL2
 }

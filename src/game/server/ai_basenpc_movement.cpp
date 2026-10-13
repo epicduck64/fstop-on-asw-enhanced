@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -428,7 +428,7 @@ bool CAI_BaseNPC::AutoMovement( float flInterval, CBaseEntity *pTarget, AIMoveTr
 	if (GetIntervalMovement( flInterval, ignored, newPos, newAngles ))
 	{
 		// DevMsg( "%.2f : (%.1f) %.1f %.1f %.1f\n", gpGlobals->curtime, (newPos - GetLocalOrigin()).Length(), newPos.x, newPos.y, newAngles.y );
-	
+
 		if ( m_hCine )
 		{
 			m_hCine->ModifyScriptedAutoMovement( &newPos );

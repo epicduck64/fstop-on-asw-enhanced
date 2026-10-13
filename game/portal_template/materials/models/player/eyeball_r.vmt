@@ -1,4 +1,4 @@
-EyeRefract
+"EyeRefract"
 {
 $Iris "models/player/eyeball_r" 
 $AmbientOcclTexture "models/player/eyeball_r_ambient" 

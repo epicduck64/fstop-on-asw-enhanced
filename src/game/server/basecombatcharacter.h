@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Base combat character with no AI
 //
@@ -442,6 +442,19 @@ public:
 	// -----------------------
 	virtual void OnPursuedBy( INextBot * RESTRICT pPursuer ){} // called every frame while pursued by a bot in DirectChase.
 
+#ifdef PORTAL2
+	START_BRANCHING_SINGLETON_DEFINITION( CPhotoPlacementQuery )
+	{
+	public:
+		virtual bool GetPlacementPosition_NoHelper( CaptureInfo_t &captureInfo, CheckPlacementData_t &placementData, Vector &positionOut, QAngle &anglesOut );
+
+	protected:
+		virtual CameraInfo_ScaleData_t *GetSimpleScales( void );
+	};
+	END_BRANCHING_SINGLETON_DEFINITION( CPhotoPlacementQuery );
+
+	virtual void OnReleased( void );
+#endif // PORTAL2
 
 public:
 	// returns the last body region that took damage

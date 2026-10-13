@@ -11,7 +11,7 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	".\gameui;.\hl2;.\hl2\elements;.\portal;.\multiplayer;.\portal\vgui;$SRCDIR\game\shared\hl2;$SRCDIR\game\shared\multiplayer;$SRCDIR\game\shared\portal;$BASE"
-		$PreprocessorDefinitions		"$BASE;PORTAL;SWARM_DLL;HL2_EPISODIC;HL2_CLIENT_DLL;GAMEUI_EMBEDDED;GAMEUI_EXPORTS"
+		$PreprocessorDefinitions		"$BASE;PORTAL;PORTAL2;APERTURE;SWARM_DLL;HL2_EPISODIC;HL2_CLIENT_DLL;GAMEUI_EMBEDDED;GAMEUI_EXPORTS"
 	}
 }
 
@@ -272,6 +272,18 @@ $Project "Client (Portal)"
 				$File	"portal\GameUI\vtransitionscreen.cpp"
 				$File	"portal\GameUI\vvideo.cpp"
 				$File	"portal\GameUI\UIGameData.cpp"
+			}
+
+			$Folder	"Portal2 (Aperture)"
+			{
+				$File	"portal2\aperture_render_targets.cpp"
+				$File	"portal2\aperture_render_targets.h"
+				$File	"portal2\c_item_photo.cpp"
+				$File	"portal2\c_npc_hover_turret.cpp"
+				$File	"portal2\hud_flash.cpp"
+				$File	"portal2\hud_indicator.cpp"
+				$File	"portal2\hud_photo_inventory.cpp"
+				$File	"portal2\hud_viewfinder.cpp"
 			}
 		}
 	}

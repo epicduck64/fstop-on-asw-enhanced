@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -162,6 +162,26 @@ BEGIN_RECV_TABLE_NOBASE( C_BaseAnimating, DT_ServerAnimationData )
 END_RECV_TABLE()
 
 
+//-----------------------------------------------------------------------------
+// A scale change moves the render bounds but nothing was invalidating the leaf
+// system's cached AABB, so the cached copy went stale and stayed stale - which is
+// exactly what clientleafsystem.cpp:2423/2424 asserts on (its own comment: "state
+// that GetRenderBounds depends on which, on change, doesn't call
+// ClientLeafSystem::RenderableChanged()"). The sequence proxy below already does
+// this for the same reason; scale was simply missed.
+//-----------------------------------------------------------------------------
+void RecvProxy_ModelScale( const CRecvProxyData *pData, void *pStruct, void *pOut )
+{
+	RecvProxy_FloatToFloat( pData, pStruct, pOut );
+
+	C_BaseAnimating *pAnimating = (C_BaseAnimating *)pStruct;
+	if ( !pAnimating )
+		return;
+
+	// render bounds may have changed
+	pAnimating->UpdateVisibility();
+}
+
 void RecvProxy_Sequence( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
 	// Have the regular proxy store the data.
@@ -193,7 +213,7 @@ IMPLEMENT_CLIENTCLASS_DT(C_BaseAnimating, DT_BaseAnimating, CBaseAnimating)
 	RecvPropInt(RECVINFO(m_nSkin)),
 	RecvPropInt(RECVINFO(m_nBody)),
 	RecvPropInt(RECVINFO(m_nHitboxSet)),
-	RecvPropFloat(RECVINFO(m_flModelScale)),
+	RecvPropFloat(RECVINFO(m_flModelScale), 0, RecvProxy_ModelScale),
 
 //	RecvPropArray(RecvPropFloat(RECVINFO(m_flPoseParameter[0])), m_flPoseParameter),
 	RecvPropArray3(RECVINFO_ARRAY(m_flPoseParameter), RecvPropFloat(RECVINFO(m_flPoseParameter[0])) ),
@@ -355,6 +375,18 @@ void C_ClientRagdoll::OnRestore( void )
 		m_bReleaseRagdoll = true;
 		m_pRagdoll = NULL;
 		Assert( !"Attempted to restore a ragdoll without physobjects!" );
+		return;
+	}
+
+	// A failed RagdollCreate leaves listCount at zero (it zeroes it first), which is what
+	// happens when the model has no collision model - the Chell player model ships without a
+	// .phy, so a player ragdoll is never built. That is a legal state, so bail quietly here
+	// rather than fall through to RagdollActivate on an empty ragdoll, which trips the
+	// Assert(pCollide) in RagdollSetupCollisions.
+	if ( pRagdollT->listCount == 0 )
+	{
+		m_bReleaseRagdoll = true;
+		m_pRagdoll = NULL;
 		return;
 	}
 
@@ -1592,6 +1624,9 @@ void C_BaseAnimating::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quater
 				if (!m_pJiggleBones)
 				{
 					m_pJiggleBones = new CJiggleBones;
+					// TEMPORARY diagnostic - names the owner in the "tipPos/tipVel NaN" warnings
+					m_pJiggleBones->m_pDebugModelName = GetModelName();
+					m_pJiggleBones->m_nDebugEntIndex = entindex();
 				}
 
 				// do jiggle physics
@@ -2028,7 +2063,12 @@ void C_BaseAnimating::SetupBones_AttachmentHelper( CStudioHdr *hdr )
 			PositionMatrix( vecWorldBonePos, world );
 		}
 
-		// FIXME: this shouldn't be here, it should client side on-demand only and hooked into the bone cache!!
+		// Not a defect, so this is recorded rather than changed. C_BaseAnimating's
+		// FormatViewModelAttachment is an empty inline virtual (c_baseanimating.h:459);
+		// only C_BaseViewModel overrides it with real work. So for a normal entity this
+		// call is already a no-op, and for a viewmodel it genuinely has to run here as
+		// part of bone setup. The FIXME that stood here asked for it to be moved
+		// on-demand into the bone cache, which is a refactor with no defect behind it.
 		FormatViewModelAttachment( i, world );
 		PutAttachment( i + 1, world );
 	}
@@ -5489,11 +5529,18 @@ void C_BaseAnimating::OnNewSequence( void )
 	// Assert( pStudioHdr );
 	if ( pStudioHdr )
 	{
+	// GetSequence() can be -1 here: the local player reaches this point before its first
+	// sequence is set, once per map load. Every line below derives from the sequence, and
+	// an invalid one makes GetSequenceGroundSpeed -> GetSequenceMoveDist ->
+	// GetSequenceLinearMotion() log "Bad sequence ... player.mdl" while pSeqdesc asserts on
+	// it. Skip the block rather than ask. (Previously only the pSeqdesc call was guarded,
+	// which silenced the assert but left the ground-speed lookup running on -1.)
+	if ( GetSequence() >= 0 )
+	{
 		m_bSequenceLoops = ((GetSequenceFlags( pStudioHdr, GetSequence() ) & STUDIO_LOOPING) != 0);
 		m_flGroundSpeed = GetSequenceGroundSpeed( pStudioHdr, GetSequence() );
-
-		// FIXME: why is this called here?  Nothing should have changed to make this nessesary
 		SetEventIndexForSequence( pStudioHdr->pSeqdesc( GetSequence() ) );
+	}
 	}
 }
 
@@ -6494,6 +6541,10 @@ void C_BaseAnimating::SetModelScale( float scale )
 	{
 		m_flModelScale = scale;
 		InvalidatePhysicsRecursive( BOUNDS_CHANGED );
+
+		// The render bounds scale with the model, so the leaf system's cached AABB
+		// is stale after this unless it is told - see RecvProxy_ModelScale.
+		MarkRenderHandleDirty();
 	}
 }
 

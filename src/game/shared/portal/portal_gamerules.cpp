@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: The Half-Life 2 game rules, such as the relationship tables and ammo
 //			damage cvars.
@@ -1122,6 +1122,28 @@ bool CPortalGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 	{
 		return true;
 	}*/
+
+	// The camera-only groups exist so the camera's own traces can hit these
+	// objects (x-ray fizzler tunnels, placement blockers) while nothing else
+	// collides with them. The camera trace carries the same group on both sides
+	// (photo.cpp sets m_collisionGroup = COLLISION_GROUP_CAMERA_SOLID), so that
+	// matching pair IS the capture being blocked and must collide. Every other
+	// pair involving these groups must not, or the object acts solid.
+	if ( ( collisionGroup0 == COLLISION_GROUP_CAMERA_SOLID && collisionGroup1 == COLLISION_GROUP_CAMERA_SOLID ) ||
+		 ( collisionGroup0 == COLLISION_GROUP_PLACEMENT_SOLID && collisionGroup1 == COLLISION_GROUP_PLACEMENT_SOLID ) )
+	{
+		return true;
+	}
+
+	if ( collisionGroup0 == COLLISION_GROUP_CAMERA_SOLID || collisionGroup1 == COLLISION_GROUP_CAMERA_SOLID )
+	{
+		return false;
+	}
+
+	if ( collisionGroup0 == COLLISION_GROUP_PLACEMENT_SOLID || collisionGroup1 == COLLISION_GROUP_PLACEMENT_SOLID )
+	{
+		return false;
+	}
 
 	return BaseClass::ShouldCollide( collisionGroup0, collisionGroup1 ); 
 }

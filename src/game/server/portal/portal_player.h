@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -24,6 +24,10 @@ class CPortal_Player;
 #include "func_liquidportal.h"
 #include "ai_speech.h"			// For expresser host
 
+#if defined ( PORTAL2 )
+#include "portal2/inv_photos.h"
+#endif // PORTAL2
+
 struct PortalPlayerStatistics_t
 {
 	int iNumPortalsPlaced;
@@ -34,7 +38,7 @@ struct PortalPlayerStatistics_t
 //=============================================================================
 // >> Portal_Player
 //=============================================================================
-class CPortal_Player : public CHL2_Player
+class CPortal_Player : public CAI_ExpresserHost<CHL2_Player>
 {
 public:
 	DECLARE_CLASS( CPortal_Player, CHL2_Player );
@@ -232,6 +236,27 @@ public:
 	virtual CBaseEntity* EntSelectSpawnPoint( void );
 	void PickTeam( void );
 #endif
+
+#ifdef PORTAL2
+public:
+	// F-STOP ("Aperture") camera/photo interface
+	virtual void InitialSpawn( void );
+	virtual void ItemPostFrame( void );
+	void	SetPlacingPhoto( bool bPlacing );
+	void	OnPhotoAdded( int nIndex );
+	void	OnPhotoRemoved( int nIndex );
+	void	SetSelectedPhoto( int nIndex );
+	int		GetSelectedPhoto( void );
+	void	ClearPhotos( void );
+	void	StripPhotos( bool bNotifyPlayer = true );
+	void	FlashDenyIndicator( float flDuration, unsigned char nType );
+	void	FlashInventory( float flDuration, unsigned char nType );
+	void	Flash( float flDuration, const Vector &vecPosition );
+	void	ControlHelperAnimate( unsigned char nActiveIcon, bool bClear = false );
+	void	UpdateLocatorEntityIndices( int *pIndices, int nNumIndices );
+
+	CPhotoInventory m_PhotoInventory;
+#endif // PORTAL2
 };
 
 inline CPortal_Player *ToPortalPlayer( CBaseEntity *pEntity )

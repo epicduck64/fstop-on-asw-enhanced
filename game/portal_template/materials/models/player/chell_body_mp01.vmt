@@ -1,4 +1,4 @@
-VertexLitGeneric
+"VertexLitGeneric"
 {
 $basetexture "models/player/chell_body_mp01"
 $surfaceprop flesh

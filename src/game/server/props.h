@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -424,6 +424,36 @@ private:
 	string_t	m_iszOverrideScript;
 	int			m_damageToEnableMotion;
 	float		m_flForceToEnableMotion;
+
+public:
+#ifdef PORTAL2
+	// F-STOP ("Aperture"): physics props override the photo placement query so the model's
+	// "prop_alignment" keyvalues (offset / orientation / pinning / surface restriction) are honored
+	// when a captured prop is placed back into the world.
+	START_BRANCHING_SINGLETON_DEFINITION( CPhotoPlacementQuery )
+	{
+	public:
+		struct PropPlacementData_t
+		{
+			Vector	vecOffset;
+			QAngle	qAlignAngles;
+			bool	bAlignOnlyVertical;
+			bool	bAlignOnlyHorizontal;
+			bool	bPinned;
+		};
+
+		virtual bool GetPlacementPosition_NoHelper( CaptureInfo_t &captureInfo, CheckPlacementData_t &placementData, Vector &positionOut, QAngle &anglesOut );
+		bool GetPropPosition( PropPlacementData_t &propData, CaptureInfo_t &captureInfo, CheckPlacementData_t &placementData, Vector &positionOut, QAngle &anglesOut );
+		bool ValidSurface( const Vector &vecNormal, PropPlacementData_t &propData );
+		bool FindPlacementPosition( const Vector &vecEndPos, float flAxisLength, float flCounterAxisLength, const Vector &vecDirection, Vector *vecOut );
+
+	};
+	END_BRANCHING_SINGLETON_DEFINITION( CPhotoPlacementQuery );
+
+	string_t GetPhysOverrideScript( void ) { return m_iszOverrideScript; }
+	float GetMassScale( void ) { return m_massScale; }
+#endif // PORTAL2
+private:
 
 	bool		m_bThrownByPlayer;
 	bool		m_bFirstCollisionAfterLaunch;

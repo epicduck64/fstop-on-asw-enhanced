@@ -7,6 +7,7 @@
 #include "cbase.h"
 
 #include "ai_basenpc.h"
+#include "portal2/photo.h"
 #include "fmtstr.h"
 #include "activitylist.h"
 #include "animation.h"
@@ -687,6 +688,10 @@ void CAI_BaseNPC::Event_Killed( const CTakeDamageInfo &info )
 	SelectDeathPose( info );
 
 	m_lifeState = LIFE_DYING;
+
+	// F-STOP: if this NPC is being held as a photo, undo the capture now, while it still
+	// exists, so its death completes normally instead of deleting out from under the photo.
+	UTIL_NotifyCapturedEntityDying( this );
 
 	CleanupOnDeath( info.GetAttacker() );
 

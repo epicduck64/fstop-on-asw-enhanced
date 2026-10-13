@@ -72,11 +72,11 @@ JiggleData *CJiggleBones::GetJiggleData( int bone, float currenttime, const Vect
 			}
 			if ( !data->tipPos.IsValid() )
 			{
-				Warning( "tipPos NaN\n" );
+				Warning( "tipPos NaN (model '%s', ent %d, bone %d)\n", m_pDebugModelName ? m_pDebugModelName : "?", m_nDebugEntIndex, data->bone );
 			}
 			if ( !data->tipVel.IsValid() )
 			{
-				Warning( "tipVel NaN\n" );
+				Warning( "tipVel NaN (model '%s', ent %d, bone %d)\n", m_pDebugModelName ? m_pDebugModelName : "?", m_nDebugEntIndex, data->bone );
 			}
 			if ( !data->tipAccel.IsValid() )
 			{

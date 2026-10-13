@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -15,6 +15,10 @@
 #include "studio.h"
 #include "datacache/idatacache.h"
 #include "tier0/threadtools.h"
+
+#ifdef PORTAL2
+#include "portal2/photo.h"
+#endif // PORTAL2
 
 struct animevent_t;
 struct matrix3x4_t;
@@ -50,6 +54,7 @@ public:
 	virtual void SetModel( const char *szModelName );
 	virtual void Activate();
 	virtual void Spawn();
+	virtual void UpdateOnRemove();
 	virtual void Precache();
 	virtual void SetTransmit( CCheckTransmitInfo *pInfo, bool bAlways );
 
@@ -358,6 +363,27 @@ public:
 	virtual void OnFizzled(void);
 #endif
 
+#ifdef PORTAL2
+	// F-STOP ("Aperture"): camera capture + photo placement query (branching)
+	START_BRANCHING_SINGLETON_DEFINITION( CPhotoPlacementQuery )
+	{
+	public:
+		virtual bool GetPlacementPosition_NoHelper( CaptureInfo_t &captureInfo, CheckPlacementData_t &placementData, Vector &positionOut, QAngle &anglesOut );
+	};
+	END_BRANCHING_SINGLETON_DEFINITION( CPhotoPlacementQuery );
+
+	virtual bool MayBeCaptured( void );
+	virtual bool TestPreCapture( void ) { return true; }
+	virtual void OnCaptured( void );
+	virtual void OnReleased( void );
+	virtual bool ShouldSavePhysics( void );
+
+	void SetObjectScaleLevel( int nScaleLevel ) { m_nObjectScaleLevel = nScaleLevel; }
+	int GetObjectScaleLevel( void ) { return m_nObjectScaleLevel; }
+	int	m_nObjectScaleLevel;
+	bool m_bCanBeCaptured;			// Set true this prop allows capture by weapon_camera
+#endif // PORTAL2
+
 private:
 	void LockStudioHdr();
 	void UnlockStudioHdr();
@@ -454,6 +480,11 @@ public:
 	COutputEvent m_OnFizzled;		// Fizzled by a fizzler
 #endif
 
+#ifdef PORTAL2
+	COutputEvent m_OnCameraCapture;	// captured by weapon_camera
+	COutputEvent m_OnCameraRelease; // put back into the world by weapon_camera
+#endif // PORTAL2
+
 private:
 	CStudioHdr			*m_pStudioHdr;
 	CThreadFastMutex	m_StudioHdrInitLock;
@@ -510,7 +541,9 @@ inline void CBaseAnimating::ResetSequence(int nSequence)
 
 inline float CBaseAnimating::GetPlaybackRate() const
 {
-
+#ifdef PORTAL2
+	return m_flPlaybackRate * ( 1.0f / sqrt( GetModelScale() ) );
+#endif // PORTAL2
 
 	// Slow the animation while partially frozen
 	return m_flPlaybackRate * clamp( 1.0f - m_flFrozen, 0.0f, 1.0f );

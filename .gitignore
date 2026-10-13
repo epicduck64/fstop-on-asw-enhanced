@@ -1,52 +1,202 @@
-# Files to ignore when considering what GIT should commit.
+# ============================================================================
+# F-STOP repo .gitignore
+#
+# Policy: this repository ships the F-STOP port plus the engine binaries that
+# upstream (sears2424/Enhanced-Source) ships - game/bin, game/core, game/platform
+# and the launchers. Retail game content and the Portal 2 2009 depot are IGNORED
+# (not deleted) so local dev keeps working but they can never enter a commit; that
+# content comes from the player's own installed copy.
+# The ignore list mirrors upstream where it does not conflict with the above - see
+# the upstream-parity block below.
+# ============================================================================
 
-# Visual Studio
-source-shader-editor
+# --- retail trees (provided by the player's own install) ---
+/game/hl2_template/
+/game/template/
+/game/template_additional_content/
+/game/sdk_content/
+/game/deferred/
+/game/vectronic/
+/game/hl2.exe
+/game/hl2.wrap.exe
+
+# --- engine/SDK build outputs and IDE cruft (regenerated from src/) ---
+/game/portal_template/bin/
+/src/.vs/
+**/.vs/
+*.sln.bak
+/src/UpgradeLog.htm
+/src/devtools/bin/*.dll
+
+# --- compiler/build intermediates (never source) ---
+# shaderlib.lib is a build output, rewritten by every ShaderLib build. It used to be
+# tracked (upstream ships prebuilt libs) but that leaves the tree permanently dirty.
+/src/lib/public/shaderlib.lib
+*.obj
+*.pdb
+*.tlog
+*.idb
+*.ilk
+*.exp
+*.sbr
+*.bsc
+/src/game/server/Debug_portal_template/
+/src/game/client/Debug_portal_template/
+/src/game/client/Debug_mod_hl2/
+/src/materialsystem/shaderlib/Debug/
+/src/materialsystem/stdshaders/Debug_dx9_portal/
+/src/materialsystem/deferredshaders/Release_dx9/
+
+# --- upstream parity: everything Enhanced Source's .gitignore skips ---
+# Mirrors sears2424/Enhanced-Source/.gitignore so this repo ships exactly what
+# upstream ships. The VS *project* files are VPC-generated (the .vpc sources ship, and
+# vpc.exe is in src/devtools). The one *solution* is not reproducible though: VPC's -mksln
+# needs the VS2013 project-file registration (VisualStudio.vcxproj.12.0), which a machine
+# with only a newer Visual Studio does not have - it writes every .vcxproj and then
+# abandons the solution. So src/Game_Portal_Template-2019.sln ships with the repo
+# (re-included below) and the build works on any machine.
 *.suo
 *.user
 *.sln.docstates
-*.obj
-*.pch
-*.tlog
-*.log
 *.scc
-*.exp
-*.ilk
 *.lastbuildstate
-vc100.pdb
-ipch
+*.pch
 *.sdf
 *.opensdf
-*.idb
-*.vcxproj
-*.vcxproj.filters
-*.sln
-*.vpc_crc
-*.vpc.sentinel
+ipch/
 *.VC
 *.VC.VC.opendb
 *.VC.db
-*.pdb
-*.mdmp
-
-# shader files
-*.tmp
-
+vc100.pdb
+*.vpc_crc
+*.vpc.sentinel
+*.sln
+!/src/Game_Portal_Template-2019.sln
+*.vcxproj
+*.vcxproj.filters
+*.log
 hammer.vdf
 GameConfig.txt
+/game/hl2/
+/game/portal/
+/src/game/client/Debug*/
+/src/game/client/Release*/
+/src/game/server/Debug*/
+/src/game/server/Release*/
+/src/materialsystem/shaderlib/Release*/
 
-game/hl2
-game/portal
+# --- runtime junk ---
+# Hammer autosaves are per-mapper session state, not content. hammer.bat -writeconfig
+# repoints Hammer's autosave folder at game\bin\HammerAutosave\, so it is recreated on
+# demand and nothing here needs to ship.
+/game/bin/HammerAutosave/*.vmf_autosave
+/game/portal_template/console*
+/game/portal_template/*.tmp
+/game/portal_template/*.dt
+/game/portal_template/SAVE/
+/game/portal_template/stats.txt
+/game/portal_template/tilegen_log.txt
+/game/portal_template/demoheader.tmp
+# engine runtime state - the game rewrites this on launch
+/game/portal_template/cfg/config.cfg
+# Per-machine video settings (resolution, AA, aniso). The engine does not recreate this on
+# launch, so a fresh clone just runs at engine defaults until the user sets them - preferable
+# to shipping one machine's resolution as everyone's default, and it stops the file churning
+# on every run.
+/game/portal_template/cfg/video.txt
+/game/portal_template/voice_ban.dt
+/game/portal_template/screenshots/
+/game/portal_template/cfg/*.bak
 
-src/game/client/Release*
-src/game/client/Debug*
-src/game/server/Debug*
-src/game/server/Release*
+# NOT ignored on purpose: maps/soundcache/ and modelsounds.cache ship with the repo.
+# These are what the engine builds on a first launch - it walks every .wav in the mount
+# set (~16.5k of them) and hashes each one, and that build is the multi-minute freeze a
+# fresh clone otherwise pays exactly once. Together they are 2.3 MB and contain no
+# machine-specific data, only relative sound and model paths, so they are safe to carry.
+# If the sound set later changes the engine detects the mismatch and rebuilds, so a stale
+# copy costs nothing beyond the rebuild it was there to avoid.
+
+# --- Source engine crash dumps (minidumps written on a hard crash) ---
+*.mdmp
+*.dmp
 
 
-src/.vs/Game_Deferred-2013/v15/Browse.VC.opendb
-src/materialsystem/deferredshaders/Release_dx9_deferred/game_shader_generic_deferred.lib
-src/materialsystem/deferredshaders/Release_dx9_deferred/game_shader_generic_deferred.dll
-src/materialsystem/deferredshaders/Debug_dx9_deferred/game_shader_generic_deferred.lib
-src/.vs/Game_Deferred-2013/v15/Solution.VC.db-wal
-src/.vs/Game_Deferred-2013/v15/Solution.VC.db-shm
+# NOTE: CS:GO/L4D2-sourced assets (particles/rain_fx.pcf, some particle .vtf) are
+# intentionally KEPT in the mod - those games ship VPK v2, which this engine
+# cannot mount ("Unknown version 2 for vpk"), so the mod must carry them itself.
+/game/retail/
+
+# >>> mod-overrides (generated by tools/generate_diffs.ps1 -ApplyIgnore) >>>
+# generated 2026-10-12 05:23:27 - 64 entries - do not edit by hand
+# portal_template assets are carried by diffs\ and restored by tools\generate_assets.bat.
+/game/portal_template/materials/effects/wispy_smoke.vtf
+/game/portal_template/materials/particle/droplets/droplets.vtf
+/game/portal_template/materials/particle/fire_particle_6/fire_particle_6.vtf
+/game/portal_template/materials/particle/particle_smokegrenade.vtf
+/game/portal_template/materials/particle/rain.vtf
+/game/portal_template/materials/particle/smokesprites0001.vtf
+/game/portal_template/materials/particle/vistasmokev1/vistasmokev1.vtf
+/game/portal_template/materials/particle/water_splash/water_splash.vtf
+/game/portal_template/models/portals/portal1.dx90.vtx
+/game/portal_template/models/portals/portal1.mdl
+/game/portal_template/models/portals/portal1.vvd
+/game/portal_template/models/portals/portal1_renderfix.dx90.vtx
+/game/portal_template/models/portals/portal1_renderfix.mdl
+/game/portal_template/models/portals/portal1_renderfix.vvd
+/game/portal_template/models/portals/portal2.dx90.vtx
+/game/portal_template/models/portals/portal2.mdl
+/game/portal_template/models/portals/portal2.vvd
+/game/portal_template/models/portals/portal2_renderfix.dx90.vtx
+/game/portal_template/models/portals/portal2_renderfix.mdl
+/game/portal_template/models/portals/portal2_renderfix.vvd
+/game/portal_template/models/props_c17/gravestone_coffinpiece001a.mdl
+/game/portal_template/models/props_c17/gravestone_coffinpiece002a.mdl
+/game/portal_template/models/props_c17/gravestone_cross001a.mdl
+/game/portal_template/models/props_c17/gravestone_cross001a.vvd
+/game/portal_template/models/props_c17/gravestone_cross001b.mdl
+/game/portal_template/models/props_c17/gravestone_statue001a.mdl
+/game/portal_template/models/props_c17/gravestone001a.mdl
+/game/portal_template/models/props_c17/gravestone002a.mdl
+/game/portal_template/models/props_c17/gravestone003a.mdl
+/game/portal_template/models/props_c17/gravestone004a.mdl
+/game/portal_template/models/weapons/v_portalgun.dx90.vtx
+/game/portal_template/models/weapons/v_portalgun.mdl
+/game/portal_template/models/weapons/v_portalgun.vvd
+/game/portal_template/models/zombie/classic.dx80.vtx
+/game/portal_template/models/zombie/classic.dx90.vtx
+/game/portal_template/models/zombie/classic.mdl
+/game/portal_template/models/zombie/classic.phy
+/game/portal_template/models/zombie/classic.sw.vtx
+/game/portal_template/models/zombie/classic.vvd
+/game/portal_template/models/zombie/new_zombie.dx80.vtx
+/game/portal_template/models/zombie/new_zombie.dx90.vtx
+/game/portal_template/models/zombie/new_zombie.mdl
+/game/portal_template/models/zombie/new_zombie.phy
+/game/portal_template/models/zombie/new_zombie.sw.vtx
+/game/portal_template/models/zombie/new_zombie.vvd
+/game/portal_template/models/zombie/zombie_animations.ani
+/game/portal_template/models/zombie/zombie_animations.mdl
+/game/portal_template/particles/airvents.pcf
+/game/portal_template/particles/portal_projectile.pcf
+/game/portal_template/particles/rain_fx.pcf
+/game/portal_template/scripts/preload_xbox.xsc
+/game/portal_template/shaders/fxc/bloom_ps20.vcs
+/game/portal_template/shaders/fxc/bloom_ps20b.vcs
+/game/portal_template/shaders/fxc/portal_ps20.vcs
+/game/portal_template/shaders/fxc/portal_ps20b.vcs
+/game/portal_template/shaders/fxc/portal_refract_ps20.vcs
+/game/portal_template/shaders/fxc/portal_refract_ps20b.vcs
+/game/portal_template/shaders/fxc/portal_refract_vs20.vcs
+/game/portal_template/shaders/fxc/portal_vs20.vcs
+/game/portal_template/shaders/fxc/portalstaticoverlay_ps20.vcs
+/game/portal_template/shaders/fxc/portalstaticoverlay_ps20b.vcs
+/game/portal_template/shaders/fxc/portalstaticoverlay_vs20.vcs
+/game/portal_template/shaders/fxc/screenspaceeffect_vs20.vcs
+/game/portal_template/sound/ui/menu.mp3
+# <<< mod-overrides <<<
+
+# --- p2-2009: local copy of the Portal 2 2009 assets (mounted by GameInfo) ---
+# Contents are ignored; the folder itself ships (via .gitkeep) and each player
+# drops their own copy in.
+/game/p2-2009/*
+!/game/p2-2009/.gitkeep

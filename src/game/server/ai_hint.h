@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Hint node utilities and functions.
 //
@@ -117,6 +117,10 @@ enum Hint_e
 
 #ifdef INFESTED_DLL
 	HINT_ASW_COVERED_SPAWN = 1300,
+#endif
+
+#ifdef PORTAL2
+	HINT_PORTAL2_NEST = 1400,
 #endif
 };
 const char *GetHintTypeDescription( Hint_e iHintType );

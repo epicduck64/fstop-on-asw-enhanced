@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: A slow-moving, once-human headcrab victim with only melee attacks.
 //
@@ -111,6 +111,7 @@ public:
 	Activity NPC_TranslateActivity( Activity newActivity );
 		
 	void SetHeadlessModel (void);
+	void InputRiseFromGround( inputdata_t &inputdata );
 
 	void OnStateChange( NPC_STATE OldState, NPC_STATE NewState );
 
@@ -189,6 +190,7 @@ enum
 	COND_BLOCKED_BY_DOOR = LAST_BASE_ZOMBIE_CONDITION,
 	COND_DOOR_OPENED,
 	COND_ZOMBIE_CHARGE_TARGET_MOVED,
+	COND_ZOMBIE_RISE_FROM_GROUND,
 };
 
 //=========================================================
@@ -200,6 +202,7 @@ enum
 	SCHED_ZOMBIE_WANDER_ANGRILY,
 	SCHED_ZOMBIE_CHARGE_ENEMY,
 	SCHED_ZOMBIE_FAIL,
+	SCHED_ZOMBIE_RISE_FROM_GROUND,
 };
 
 //=========================================================
@@ -217,8 +220,11 @@ enum
 
 int ACT_ZOMBIE_TANTRUM;
 int ACT_ZOMBIE_WALLPOUND;
+int ACT_ZOMBIE_RISE_FROM_GROUND;
 
 BEGIN_DATADESC( CZombie )
+
+	DEFINE_INPUTFUNC( FIELD_VOID, "RiseFromGround", InputRiseFromGround ),
 
 	DEFINE_FIELD( m_hBlockingDoor, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_flDoorBashYaw, FIELD_FLOAT ),
@@ -236,7 +242,7 @@ void CZombie::Precache( void )
 {
 	BaseClass::Precache();
 
-	PrecacheModel( "models/zombie/classic.mdl" );
+	PrecacheModel( "models/zombie/new_zombie.mdl" );
 	PrecacheModel( "models/zombie/classic_torso.mdl" );
 	PrecacheModel( "models/zombie/classic_legs.mdl" );
 
@@ -318,9 +324,24 @@ void CZombie::PrescheduleThink( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Raises this zombie out of the floor where it stands. The tombstone
+//			and the android dispenser both send this to the NPC they drop.
+//-----------------------------------------------------------------------------
+void CZombie::InputRiseFromGround( inputdata_t &inputdata )
+{
+	SetCondition( COND_ZOMBIE_RISE_FROM_GROUND );
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 int CZombie::SelectSchedule ( void )
 {
+	if( HasCondition( COND_ZOMBIE_RISE_FROM_GROUND ) )
+	{
+		ClearCondition( COND_ZOMBIE_RISE_FROM_GROUND );
+		return SCHED_ZOMBIE_RISE_FROM_GROUND;
+	}
+
 	if( HasCondition( COND_PHYSICS_DAMAGE ) && !m_ActBusyBehavior.IsActive() )
 	{
 		return SCHED_FLINCH_PHYSICS;
@@ -481,7 +502,7 @@ const char *CZombie::GetTorsoModel( void )
 void CZombie::SetHeadlessModel( void )
 {
 	SetModel("");
-	CreateRagGib( "models/zombie/classic.mdl", GetLocalOrigin(), GetLocalAngles(), GetLocalVelocity(), 0, ShouldIgniteZombieGib() );
+	CreateRagGib( "models/zombie/new_zombie.mdl", GetLocalOrigin(), GetLocalAngles(), GetLocalVelocity(), 0, ShouldIgniteZombieGib() );
 }
 //---------------------------------------------------------
 //---------------------------------------------------------
@@ -496,9 +517,10 @@ void CZombie::SetZombieModel( void )
 	}
 	else
 	{
-		SetModel( "models/zombie/classic.mdl" );
+		SetModel( "models/zombie/new_zombie.mdl" );
 		SetHullType( HULL_HUMAN );
 	}
+// We don't want a headcrab
 	SetBodygroup( ZOMBIE_BODYGROUP_HEADCRAB, !m_fIsHeadless );
 
 	SetHullSizeNormal( true );
@@ -923,6 +945,7 @@ AI_BEGIN_CUSTOM_NPC( npc_zombie, CZombie )
 	DECLARE_CONDITION( COND_BLOCKED_BY_DOOR )
 	DECLARE_CONDITION( COND_DOOR_OPENED )
 	DECLARE_CONDITION( COND_ZOMBIE_CHARGE_TARGET_MOVED )
+	DECLARE_CONDITION( COND_ZOMBIE_RISE_FROM_GROUND )
 
 	DECLARE_TASK( TASK_ZOMBIE_EXPRESS_ANGER )
 	DECLARE_TASK( TASK_ZOMBIE_YAW_TO_DOOR )
@@ -931,6 +954,7 @@ AI_BEGIN_CUSTOM_NPC( npc_zombie, CZombie )
 	
 	DECLARE_ACTIVITY( ACT_ZOMBIE_TANTRUM );
 	DECLARE_ACTIVITY( ACT_ZOMBIE_WALLPOUND );
+	DECLARE_ACTIVITY( ACT_ZOMBIE_RISE_FROM_GROUND );
 
 	DEFINE_SCHEDULE
 	( 
@@ -1002,6 +1026,17 @@ AI_BEGIN_CUSTOM_NPC( npc_zombie, CZombie )
 		"		COND_CAN_MELEE_ATTACK2"
 		"		COND_GIVE_WAY"
 		"		COND_DOOR_OPENED"
+	)
+
+	DEFINE_SCHEDULE
+	(
+		SCHED_ZOMBIE_RISE_FROM_GROUND,
+
+		"	Tasks"
+		"		TASK_STOP_MOVING					0"
+		"		TASK_PLAY_SEQUENCE					ACTIVITY:ACT_ZOMBIE_RISE_FROM_GROUND"
+		""
+		"	Interrupts"
 	)
 
 AI_END_CUSTOM_NPC()

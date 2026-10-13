@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -1699,6 +1699,9 @@ void CNPC_Manhack::Bump( CBaseEntity *pHitEntity, float flInterval, trace_t &tr 
 //-----------------------------------------------------------------------------
 void CNPC_Manhack::CheckCollisions(float flInterval)
 {
+	if ( IsFrozen() )
+		return;
+
 	// Trace forward to see if I hit anything. But trace forward along the
 	// owner's view direction if you're being carried.
 	Vector vecTraceDir, vecCheckPos;
@@ -1870,6 +1873,12 @@ void CNPC_Manhack::MoveExecute_Alive(float flInterval)
 		m_fEnginePowerScale += 0.05;
 	}
 
+	if ( IsFrozen() )
+	{
+		m_fEnginePowerScale = 0;
+		vCurrentVelocity.z -= flInterval * sv_gravity.GetFloat();
+	}
+
 	// ----------------------------------------------------------------------------------------
 	// Add time-coherent noise to the current velocity so that it never looks bolted in place.
 	// ----------------------------------------------------------------------------------------
@@ -1925,7 +1934,7 @@ void CNPC_Manhack::MoveExecute_Alive(float flInterval)
 	SetCurrentVelocity( vCurrentVelocity + m_vForceVelocity );
 	m_vForceVelocity = vec3_origin;
 
-	if ( !m_bHackedByAlyx || GetEnemy() )
+	if ( !IsFrozen() && ( !m_bHackedByAlyx || GetEnemy() ) )
 	{
 		// If hacked and no enemy, don't drift!
 		AddNoiseToVelocity( noiseScale );
@@ -2044,6 +2053,15 @@ void CNPC_Manhack::SpinBlades(float flInterval)
 		SetBodygroup( MANHACK_BODYGROUP_BLUR, MANHACK_BODYGROUP_OFF );
 		m_flBladeSpeed = 0.0;
 		m_flPlaybackRate = 1.0;
+		return;
+	}
+
+	if ( IsFrozen() )
+	{
+		SetBodygroup( MANHACK_BODYGROUP_BLADE, MANHACK_BODYGROUP_ON );
+		SetBodygroup( MANHACK_BODYGROUP_BLUR, MANHACK_BODYGROUP_OFF );
+		m_flBladeSpeed = 0.0;
+		m_flPlaybackRate = 0.0;
 		return;
 	}
 
@@ -2385,6 +2403,8 @@ void CNPC_Manhack::Spawn(void)
 	m_flFieldOfView		= VIEW_FIELD_FULL;
 	m_NPCState			= NPC_STATE_NONE;
 
+	// Stock HL2 behaviour: a manhack told to use air nodes takes NAV_FLY and attempts to fly
+	// whether or not the current map actually has a node graph built for it.
 	if ( m_spawnflags & SF_MANHACK_USE_AIR_NODES)
 	{
 		SetNavType(NAV_FLY);
@@ -2841,6 +2861,11 @@ void CNPC_Manhack::ClampMotorForces( Vector &linear, AngularImpulse &angular )
 {
 	float scale = m_flBladeSpeed / 100.0;
 	
+	if ( IsFrozen() )
+	{
+		scale = 0;
+	}
+	
 
 	// Msg("%.0f %.0f %.0f\n", linear.x, linear.y, linear.z );
 
@@ -2863,6 +2888,38 @@ void CNPC_Manhack::ClampMotorForces( Vector &linear, AngularImpulse &angular )
 	angular.x *= scale;
 	angular.y *= scale;
 	angular.z *= scale;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_Manhack::Freeze( float flFreezeAmount, CBaseEntity *pFreezer, Ray_t *pFreezeRay )
+{
+	if ( IsFrozen() )
+	{
+		TakeDamage( CTakeDamageInfo( pFreezer, pFreezer, 1, DMG_BLAST ) );
+	}
+	else
+	{
+		if ( flFreezeAmount < 0 )
+		{
+			BaseClass::Freeze( flFreezeAmount, pFreezer );
+		}
+		else
+		{
+			// Stay frozen for 5 seconds
+			m_flFrozen = 1.0f;
+			m_flFrozenThawRate = 0.2f;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_Manhack::Unfreeze()
+{
+	m_flFrozen = 0.0f;
 }
 
 //-----------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -258,8 +258,12 @@ void CProp_Portal::Spawn( void )
 {
 	Precache();
 
-	Assert( s_PortalLinkageGroups[m_iLinkageGroupID].Find( this ) == -1 );
-	s_PortalLinkageGroups[m_iLinkageGroupID].AddToTail( this );
+	// Idempotent, matching the guard Activate() uses further down. A portal can legitimately
+	// be in its linkage group before it is spawned - prop_portal_linked_door creates one and
+	// calls ChangeLinkageGroup on it before DispatchSpawn - so the old unconditional Assert
+	// fired once per portal created that way.
+	if ( s_PortalLinkageGroups[m_iLinkageGroupID].Find( this ) == -1 )
+		s_PortalLinkageGroups[m_iLinkageGroupID].AddToTail( this );
 
 	m_matrixThisToLinked.Identity(); //don't accidentally teleport objects to zero space
 	
@@ -2260,7 +2264,9 @@ void CProp_Portal::UpdateCorners()
 
 void CProp_Portal::ChangeLinkageGroup( unsigned char iLinkageGroupID )
 {
-	Assert( s_PortalLinkageGroups[m_iLinkageGroupID].Find( this ) != -1 );
+	// No assert here: a portal that has not been spawned yet is in no group, which is the
+	// state prop_portal_linked_door puts a freshly created portal in when it changes the
+	// group before DispatchSpawn. FindAndRemove is a no-op when the entry is absent.
 	s_PortalLinkageGroups[m_iLinkageGroupID].FindAndRemove( this );
 	s_PortalLinkageGroups[iLinkageGroupID].AddToTail( this );
 	m_iLinkageGroupID = iLinkageGroupID;
@@ -2311,5 +2317,45 @@ const CUtlVector<CProp_Portal *> *CProp_Portal::GetPortalLinkageGroup( unsigned 
 bool CProp_Portal::IsFloorPortal(float fThreshold) const
 {
 	return m_PortalSimulator.GetInternalData().Placement.vForward.z > fThreshold;
+}
+
+//-----------------------------------------------------------------------------
+// F-STOP ("Aperture"): linkage IDs + portal resize (Portal 2 additions)
+//-----------------------------------------------------------------------------
+unsigned char UTIL_GetUnusedLinkageID( void )
+{
+	static unsigned char s_iBestGuessUnusedLinkageID = 0;
+
+	if ( s_PortalLinkageGroups[s_iBestGuessUnusedLinkageID].Count() == 0 )
+	{
+		// early out for best guess 
+		return s_iBestGuessUnusedLinkageID++;
+	}
+	else
+	{
+		// walk all linkage groups for a free one
+		for ( int i = 0; i < 256; ++i )
+		{
+			if ( s_PortalLinkageGroups[i].Count() == 0 )
+			{
+				s_iBestGuessUnusedLinkageID = i+1;
+				return i;
+			}
+		}
+	}
+
+	Warning( "*** All portal linkage IDs in use! ***\nThere may be >254 portal pairs, or some bug causing the linkage IDs not to be freed up.\n" );
+	Assert( 0 );
+	return PORTAL_LINKAGE_GROUP_INVALID;
+}
+
+void CProp_Portal::Resize( float fHalfWidth, float fHalfHeight )
+{
+	// F-STOP ("Aperture"): Portal 2 added runtime portal resizing. The Alien Swarm base does not
+	// carry the required support (network half-extents, CPortalSimulator::SetSize, and
+	// CPhysicsCloneArea::Resize), so runtime resizing is unavailable here and this is a no-op.
+	// Portal dimensions remain the fixed defaults (PORTAL_HALF_WIDTH / PORTAL_HALF_HEIGHT).
+	NOTE_UNUSED( fHalfWidth );
+	NOTE_UNUSED( fHalfHeight );
 }
 

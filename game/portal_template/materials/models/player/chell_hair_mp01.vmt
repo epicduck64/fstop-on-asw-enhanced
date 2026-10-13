@@ -1,4 +1,4 @@
-VertexLitGeneric
+"VertexLitGeneric"
 {
 $basetexture "models/player/chell_hair_mp01"
 $bumpmap "models\player/chell_hair_normal"

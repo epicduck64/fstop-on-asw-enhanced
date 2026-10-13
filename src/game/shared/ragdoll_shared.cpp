@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -292,7 +292,19 @@ static void RagdollCreateObjects( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragd
 	memset( ragdoll.list, 0, sizeof(ragdoll.list) );
 	memset( &ragdoll.animfriction, 0, sizeof(ragdoll.animfriction) );
 	
-	if ( !params.pCollide || params.pCollide->solidCount > RAGDOLL_MAX_ELEMENTS )
+	// A model with no collision model is a legal state, not a content error: the Chell player
+	// model ships without a .phy (which is why a player death produces no ragdoll), and the
+	// engine already returns NULL for that case in CreateServerRagdollAttached. Kept separate
+	// from the solid-count check below so a missing .phy is not reported as an asset problem.
+	if ( !params.pCollide )
+	{
+#ifdef _DEBUG
+		Assert( 0 && "RagdollCreate: model has no collision model, so no ragdoll is created" );
+#endif
+		return;
+	}
+
+	if ( params.pCollide->solidCount > RAGDOLL_MAX_ELEMENTS )
 	{
 		// Whoever wrote the line that I commented out needs to rethink their career in programming.
 		//Warning("Ragdoll solid count %d exceeds maximum limit of %d - Ragdoll not created", params.pCollide->solidCount, RAGDOLL_MAX_ELEMENTS);

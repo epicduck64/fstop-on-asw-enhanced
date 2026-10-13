@@ -198,6 +198,13 @@ void ResizeAnimationLayerCallback( void *pStruct, int offsetToUtlVector, int len
 			for ( int i = 0; i < diff; ++i )
 			{
 				int j = pVec->AddToTail( );
+
+				// Start the slot from the class's own reset state. That sets m_nOrder to
+				// MAX_OVERLAYS so the overlay walks skip it, and m_nSequence to a valid
+				// index - those loops hand the sequence straight to pSeqdesc, which asserts
+				// on an out-of-range value. Reset() before SetOwner so the owner is set last
+				// and cannot be clobbered.
+				(*pVec)[j].Reset();
 				(*pVec)[j].SetOwner( pEnt );
 			}
 			pVecIV->AddMultipleToTail( diff );
@@ -217,7 +224,10 @@ void ResizeAnimationLayerCallback( void *pStruct, int offsetToUtlVector, int len
 		}
 	}
 
-	// FIXME: need to set historical values of nOrder in pVecIV to MAX_OVERLAY
+	// Historical values of nOrder in pVecIV are left alone here: the added slots are
+	// initialised by Reset() above, and the interpolated copies are rebound to the live
+	// elements by the loop that re-adds every var, so there is no stale history to
+	// backfill. (Was: "need to set historical values of nOrder in pVecIV to MAX_OVERLAY".)
 
 	// Ensure capacity
 	pVec->EnsureCapacity( len );

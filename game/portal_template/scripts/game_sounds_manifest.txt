@@ -12,6 +12,7 @@ game_sounds_manifest
 
 	// Weapon sounds
 	"precache_file"		"scripts/game_sounds_weapons.txt"
+	"precache_file"		"scripts/game_sounds_weapon_camera.txt"
 	
 	//Music Tracks
 	"precache_file"		"scripts/level_sounds_music.txt"
@@ -41,4 +42,18 @@ game_sounds_manifest
 	"precache_file"		"scripts/npc_sounds_turret.txt"
 	"precache_file"		"scripts/npc_sounds_combine_ball.txt"
 	"precache_file"		"scripts/npc_sounds_combine_ball_episodic.txt"
+
+	// HL2 shared NPC sounds (zombie / strider) - live in the mounted hl2 + core trees
+	"precache_file"		"scripts/npc_sounds_zombie.txt"
+	"precache_file"		"scripts/npc_sounds_strider.txt"
+	// Same situation: these live in the mounted hl2 tree, but the manifest must name
+	// them or the engine never precaches the entries and every script sound fails.
+	"precache_file"		"scripts/npc_sounds_manhack.txt"
+	"precache_file"		"scripts/npc_sounds_headcrab.txt"
+
+	// Portal 2 / F-STOP NPC + prop sounds
+	"precache_file"		"scripts/npc_sounds_android.txt"
+	"precache_file"		"scripts/npc_sounds_android_missile.txt"
+	"precache_file"		"scripts/npc_sounds_chicken.txt"
+	"precache_file"		"scripts/game_sounds_props_aperture.txt"
 }

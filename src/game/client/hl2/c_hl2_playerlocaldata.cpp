@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -29,6 +29,10 @@ BEGIN_RECV_TABLE_NOBASE( C_HL2PlayerLocalData, DT_HL2Local )
 	RecvPropFloat( RECVINFO(m_flFlashBattery) ),
 	RecvPropVector( RECVINFO(m_vecLocatorOrigin) ),
 #endif
+#ifdef PORTAL2
+	RecvPropArray3( RECVINFO_ARRAY(m_nLocatorEntityIndices), RecvPropInt( RECVINFO(m_nLocatorEntityIndices[0]) ) ),
+	RecvPropBool( RECVINFO(m_bPlacingPhoto) ),
+#endif
 END_RECV_TABLE()
 
 BEGIN_PREDICTION_DATA_NO_BASE( C_HL2PlayerLocalData )
@@ -47,6 +51,13 @@ C_HL2PlayerLocalData::C_HL2PlayerLocalData()
 #ifdef HL2_EPISODIC
 	m_flFlashBattery = 0.0f;
 	m_vecLocatorOrigin = vec3_origin;
+#endif
+#ifdef PORTAL2
+	for ( int i = 0; i < 16; i++ )
+	{
+		m_nLocatorEntityIndices[i] = -1;
+	}
+	m_bPlacingPhoto = false;
 #endif
 }
 

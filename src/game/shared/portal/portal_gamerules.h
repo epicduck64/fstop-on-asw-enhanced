@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Game rules for Portal.
 //
@@ -20,8 +20,8 @@
 #pragma once
 #endif
 
-#include "singleplay_gamerules.h"
 #include "gamerules.h"
+#include "hl2_gamerules.h"
 
 #ifdef CLIENT_DLL
 	#define CPortalGameRules C_PortalGameRules
@@ -37,10 +37,10 @@ public:
 };
 
 
-class CPortalGameRules : public CSingleplayRules
+class CPortalGameRules : public CHalfLife2
 {
 public:
-	DECLARE_CLASS( CPortalGameRules, CSingleplayRules );
+	DECLARE_CLASS( CPortalGameRules, CHalfLife2 );
 
 	virtual bool	Init();
 	

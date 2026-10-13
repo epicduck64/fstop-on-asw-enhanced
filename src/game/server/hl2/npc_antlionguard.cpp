@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:	Antlion Guard
 //
@@ -798,6 +798,9 @@ void CNPC_AntlionGuard::Spawn( void )
 
 	m_iHealth = sk_antlionguard_health.GetFloat();
 	m_iMaxHealth = m_iHealth;
+	m_flFrozenMax = 0.6f;
+	m_flFrozenMoveBlock = 0.1f;
+
 	m_flFieldOfView	= ANTLIONGUARD_FOV_NORMAL;
 	
 	m_flPhysicsCheckTime = 0;
@@ -2935,6 +2938,42 @@ void CNPC_AntlionGuard::RunTask( const Task_t *pTask )
 	case TASK_ANTLIONGUARD_CHARGE:
 		{
 			Activity eActivity = GetActivity();
+
+			// If it's frozen, crash instantly
+			if ( m_flFrozen > 0.1f )
+			{
+				// Crash
+				EmitSound( "NPC_AntlionGuard.Shove" );
+				UTIL_ScreenShake( GetAbsOrigin(), 16.0f, 4.0f, 1.0f, 400.0f, SHAKE_START );
+				SetIdealActivity( ACT_ANTLIONGUARD_CHARGE_CRASH );
+
+				// Blow up the surrounding ice
+				CBaseEntity *pChild = FirstMoveChild();
+
+				while ( pChild )
+				{
+					CBaseEntity *pThisChild = pChild;
+
+					// Get next child before killing this one
+					pChild = pChild->NextMovePeer();
+
+					if ( FClassnameIs( pThisChild, "ice_sphere" ) )
+					{
+						if ( RandomInt( 1, 4 ) == 1 )
+						{
+							// Only gib every 4th to prevent slowdown
+							pThisChild->TakeDamage( CTakeDamageInfo( this, this, 100, DMG_GENERIC ) );
+						}
+						else
+						{
+							UTIL_Remove( pThisChild );
+						}
+					}
+				}
+
+				// Not frozen anymore!
+				m_flFrozen = 0.0f;
+			}
 
 			// See if we're trying to stop after hitting/missing our target
 			if ( eActivity == ACT_ANTLIONGUARD_CHARGE_STOP || eActivity == ACT_ANTLIONGUARD_CHARGE_CRASH ) 

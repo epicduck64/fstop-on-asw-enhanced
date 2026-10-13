@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		Player for Portal.
 //
@@ -10,6 +10,7 @@
 #include "trains.h"
 #include "game.h"
 #include "portal_player_shared.h"
+#include "portal2/weapon_camera.h"
 #include "predicted_viewmodel.h"
 #include "in_buttons.h"
 #include "portal_gamerules.h"
@@ -383,6 +384,20 @@ void CPortal_Player::GiveAllItems( void )
 		pPortalGun->SetCanFirePortal1();
 		pPortalGun->SetCanFirePortal2();
 	}
+
+#ifdef PORTAL2
+	// F-STOP ("Aperture"): the leaked GiveAllItems also grants the camera + placement tool, fully
+	// upgraded. Without this hunk, impulse 101 never hands out the camera.
+	GiveNamedItem( "weapon_camera" );
+	GiveNamedItem( "weapon_placement" );
+
+	CWeaponCamera *pCamera = dynamic_cast<CWeaponCamera*>( Weapon_OwnsThisType( "weapon_camera" ) );
+	if ( pCamera )
+	{
+		pCamera->SetZoomAbility( true );
+		pCamera->SetScaleAbility( true );
+	}
+#endif // PORTAL2
 }
 
 void CPortal_Player::GiveDefaultItems( void )
@@ -1719,7 +1734,15 @@ void CPortal_Player::Event_Killed( const CTakeDamageInfo &info )
 {
 	//update damage info with our accumulated physics force
 	CTakeDamageInfo subinfo = info;
-	subinfo.SetDamageForce( m_vecTotalBulletForce );
+	// Only overwrite the force when shots actually accumulated one. A death with no bullet
+	// force behind it - a fall, a crush, a physics kill - would otherwise stamp a zero vector
+	// over the force that killed the player, and AddMultiDamage reports that as a zero-force
+	// physics damage ("something called TakeDamage with a type that needs a force and gave
+	// none") when the damage type plainly did carry one.
+	if ( !m_vecTotalBulletForce.IsZero() )
+	{
+		subinfo.SetDamageForce( m_vecTotalBulletForce );
+	}
 
 	// show killer in death cam mode
 	// chopped down version of SetObserverTarget without the team check
@@ -1821,7 +1844,7 @@ int CPortal_Player::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	}
 	else if ( ( inputInfoCopy.GetDamageType() & DMG_SHOCK ) || ( inputInfoCopy.GetDamageType() & DMG_BURN ) )
 	{
-		EmitSound( "PortalPortal.PainYelp" );
+		EmitSound( "PortalPlayer.PainYelp" );
 	}
 
 	int ret = BaseClass::OnTakeDamage( inputInfoCopy );
@@ -2337,3 +2360,199 @@ CON_COMMAND( startneurotoxins, "Starts the nerve gas timer." )
 	if( pPlayer )
 		pPlayer->SetNeuroToxinDamageTime( fCoundownTime );
 }
+
+#ifdef PORTAL2
+//------------------------------------------------------------------------------
+// F-STOP ("Aperture") camera/photo interface
+//------------------------------------------------------------------------------
+void CPortal_Player::SetPlacingPhoto( bool bPlacing )
+{
+	m_HL2Local.m_bPlacingPhoto = bPlacing;
+}
+
+void CPortal_Player::ItemPostFrame( void )
+{
+	BaseClass::ItemPostFrame();
+
+	// Update whether or not we're placing photos
+	CBaseCombatWeapon *pWeapon = GetActiveWeapon();
+	if ( pWeapon == NULL )
+	{
+		SetPlacingPhoto( false );
+	}
+}
+
+// Need player inventory settings
+void CPortal_Player::OnPhotoAdded( int nIndex )
+{
+	if ( nIndex < 0 || nIndex > 2 )
+		return;
+}
+
+void CPortal_Player::OnPhotoRemoved( int nIndex )
+{
+	if ( nIndex < 0 || nIndex > 2 )
+		return;
+}
+
+void CPortal_Player::SetSelectedPhoto( int nIndex )
+{
+	Assert( nIndex >= 0 && nIndex < 3 );
+	if ( nIndex < 0 || nIndex >= 3 )
+		return;
+}
+
+int CPortal_Player::GetSelectedPhoto( void )
+{
+	return 0;
+}
+
+void CPortal_Player::ClearPhotos( void )
+{
+}
+
+void CPortal_Player::StripPhotos( bool bNotifyPlayer /*= true*/ )
+{
+	// Let the player know we just stripped their photos from them
+	if ( bNotifyPlayer )
+	{
+		if ( Photo_Count() )
+		{
+			EmitSound( "PhotoInventory.Erased" );
+			FlashInventory( 2.0f, FLASH_INVENTORY_STRIPPED );
+		}
+	}
+
+	// Stop having a selected photo
+	ClearPhotos();
+
+	// Clear all photos
+	Photo_Purge();
+
+	CBaseCombatWeapon *pWeapon = GetActiveWeapon();
+	if ( pWeapon && FClassnameIs( pWeapon, "weapon_placement" ) )
+	{
+		// Attempt to go back to the camera, but holster failing that
+		CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+		if ( pPlayer->SwitchToNextBestWeapon( pWeapon ) == false )
+		{
+			pWeapon->Holster( NULL );
+		}
+	}
+}
+
+void CPortal_Player::FlashDenyIndicator( float flDuration, unsigned char nType )
+{
+	// we've been denied the pickup, display a hud icon to show that
+	CSingleUserRecipientFilter user( this );
+	user.MakeReliable();
+
+	UserMessageBegin( user, "IndicatorFlash" );
+	WRITE_BYTE( nType );
+	WRITE_FLOAT( flDuration );
+	MessageEnd();
+
+	// Play the denial noise
+	PlayUseDenySound();
+}
+
+void CPortal_Player::ControlHelperAnimate( unsigned char nActiveIcon, bool bClear /*= false*/ )
+{
+	CSingleUserRecipientFilter user( this );
+	user.MakeReliable();
+
+	UserMessageBegin( user, "ControlHelperAnimate" );
+	WRITE_BYTE( (unsigned char) bClear );
+	WRITE_BYTE( nActiveIcon );
+	MessageEnd();
+}
+
+void CPortal_Player::FlashInventory( float flDuration, unsigned char nType )
+{
+	CSingleUserRecipientFilter user( this );
+	user.MakeReliable();
+
+	UserMessageBegin( user, "InventoryFlash" );
+	WRITE_FLOAT( flDuration );
+	WRITE_BYTE( nType );
+	MessageEnd();
+
+	if ( nType == FLASH_INVENTORY_FULL )
+	{
+		// Play the denial noise
+		PlayUseDenySound();
+	}
+}
+
+void CPortal_Player::Flash( float flDuration, const Vector &vecPosition )
+{
+	CSingleUserRecipientFilter user( this );
+	user.MakeReliable();
+
+	UserMessageBegin( user, "Flash" );
+		WRITE_FLOAT( flDuration );
+		WRITE_FLOAT( vecPosition.x );
+		WRITE_FLOAT( vecPosition.y );
+		WRITE_FLOAT( vecPosition.z );
+	MessageEnd();
+}
+
+void CPortal_Player::InitialSpawn( void )
+{
+	BaseClass::InitialSpawn();
+	
+	// Clear our all photos
+	if ( gpGlobals->eLoadType == MapLoad_NewGame )
+	{
+		Photo_Purge();
+	}
+}
+
+void CPortal_Player::UpdateLocatorEntityIndices( int *pIndices, int nNumIndices )
+{
+	for ( int i = 0; i < 16; i++ )
+	{
+		if ( i >= nNumIndices )
+		{
+			m_HL2Local.m_nLocatorEntityIndices.GetForModify(i) = -1;
+		}
+		else
+		{
+			m_HL2Local.m_nLocatorEntityIndices.GetForModify(i) = pIndices[i];
+		}
+	}
+}
+//-----------------------------------------------------------------------------
+// Purpose: Forward mouse wheel input to the active weapon (the camera zooms its FOV, the
+//			placement tool resizes the held object). Ported from the leak's hl2_player.cpp â€”
+//			ASW's server doesn't build that file (the Portal template uses CPortal_Player).
+//-----------------------------------------------------------------------------
+void CC_MWheel_Up( void )
+{
+	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+	if ( pPlayer == NULL )
+		return;
+
+	CBaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+	if ( pWeapon == NULL )
+		return;
+
+	pWeapon->OnMouseWheel( MWHEEL_UP );
+}
+static ConCommand mwheel_up( "mwheel_up", CC_MWheel_Up, "Sends a mousewheel message to the currently held weapon", 0 );
+
+void CC_MWheel_Down( void )
+{
+	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+	if ( pPlayer == NULL )
+		return;
+
+	CBaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+	if ( pWeapon == NULL )
+		return;
+
+	pWeapon->OnMouseWheel( MWHEEL_DOWN );
+}
+static ConCommand mwheel_down( "mwheel_down", CC_MWheel_Down, "Sends a mousewheel message to the currently held weapon", 0 );
+
+#endif // PORTAL2

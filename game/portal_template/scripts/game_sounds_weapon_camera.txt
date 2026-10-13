@@ -1,0 +1,19 @@
+// F-STOP ("Aperture") camera weapon sounds.
+// The 852_0 assets ship the waves (sound/camera/snapshot.wav, sound/camera/release.wav) but no
+// game_sounds entry for them, so this soundscript is recreated.
+
+"Weapon_Camera.Capture"
+{
+	"channel"		"CHAN_WEAPON"
+	"volume"		"0.8"
+	"pitch"			"100"
+	"wave"			"camera/snapshot.wav"
+}
+
+"Weapon_Camera.Release"
+{
+	"channel"		"CHAN_WEAPON"
+	"volume"		"0.8"
+	"pitch"			"100"
+	"wave"			"camera/release.wav"
+}

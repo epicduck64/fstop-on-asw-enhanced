@@ -1,0 +1,52 @@
+// F-STOP's android missile emits these five script sounds, but the leak's own
+// npc_sounds_android.txt has no Missile entries, so every name resolved to nothing and the
+// flyby, the impacts and the burst were all silent. Mapped onto content that is mounted:
+// Portal 1's rocket (weapons/rocket/*, the sounds its rocket turret plays) for the flyby and
+// the fuse, a hard-surface impact for the world hit, the sound the leak's own android script
+// already uses for body hits, and - for the burst - the wave behind the engine's
+// BaseExplosionEffect.Sound, so this missile booms like every other explosion in the game.
+
+"NPC_Android.MissileNearMiss"
+{
+	"channel"		"CHAN_WEAPON"
+	"volume"		"VOL_NORM"
+	"pitch"			"PITCH_NORM"
+	"soundlevel"	"SNDLVL_70dB"
+	"wave"			"weapons/rocket/rocket_fly_loop1.wav"
+}
+
+"NPC_Android.MissileHitWorld"
+{
+	"channel"		"CHAN_WEAPON"
+	"volume"		"VOL_NORM"
+	"pitch"			"PITCH_NORM"
+	"soundlevel"	"SNDLVL_85dB"
+	"wave"			"ambient/materials/cartrap_explode_impact2.wav"
+}
+
+"NPC_Android.MissileHitBody"
+{
+	"channel"		"CHAN_WEAPON"
+	"volume"		"VOL_NORM"
+	"pitch"			"PITCH_NORM"
+	"soundlevel"	"SNDLVL_85dB"
+	"wave"			"npc/zombie/squish1.wav"
+}
+
+"NPC_Android.MissilePreExplode"
+{
+	"channel"		"CHAN_WEAPON"
+	"volume"		"VOL_NORM"
+	"pitch"			"PITCH_NORM"
+	"soundlevel"	"SNDLVL_80dB"
+	"wave"			"weapons/rocket/rocket_locked_beep1.wav"
+}
+
+"NPC_Android.MissileExplode"
+{
+	"channel"		"CHAN_STATIC"
+	"volume"		"1.0"
+	"pitch"			"PITCH_NORM"
+	"soundlevel"	"SNDLVL_140dB"
+	"wave"			"weapons/explode4.wav"
+}

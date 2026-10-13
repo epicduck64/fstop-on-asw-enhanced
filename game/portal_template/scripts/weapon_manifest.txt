@@ -1,5 +1,9 @@
 weapon_manifest
 {
+	// portal2 (F-STOP / Aperture) — recreated, absent from the 852_0 assets
+	"file"		"scripts/weapon_camera.txt"
+	"file"		"scripts/weapon_placement.txt"
+
 	// portal
 	"file"		"scripts/weapon_portalgun.txt"
 	"file"		"scripts/weapon_alyxgun.txt"

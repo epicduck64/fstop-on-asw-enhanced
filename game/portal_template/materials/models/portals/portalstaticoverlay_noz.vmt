@@ -1,4 +1,4 @@
-PortalStaticOverlay
+"PortalStaticOverlay"
 {
 $staticblendtexture "models/portals/dummy-gray"
 $ghostoverlay 1 

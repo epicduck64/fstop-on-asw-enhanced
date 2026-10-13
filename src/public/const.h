@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -379,6 +379,10 @@ enum Collision_Group_t
 
 
 	COLLISION_GROUP_DEBRIS_BLOCK_PROJECTILE, // Only collides with bullets
+
+	// F-STOP ("Aperture") custom collision groups (were in Valve's public/const.h)
+	COLLISION_GROUP_CAMERA_SOLID,		// Blocks the camera's capture trace (x-ray fizzlers, etc.)
+	COLLISION_GROUP_PLACEMENT_SOLID,	// Blocks photo placement
 
 	LAST_SHARED_COLLISION_GROUP
 };

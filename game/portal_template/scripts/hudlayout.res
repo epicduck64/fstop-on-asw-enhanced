@@ -757,4 +757,41 @@
 		"bgcolor_override"	"0 0 0 0"
 		"PaintBackgroundType"	"0" // rounded corners
 	}
+
+	// F-STOP ("Aperture") HUD elements
+	HudIndicator
+	{
+		"fieldName" "HudIndicator"
+		"visible" "1"
+		"enabled" "1"
+		"wide"	 "640"
+		"tall"	 "480"
+	}
+
+	HudControlHelper
+	{
+		"fieldName" "HudControlHelper"
+		"visible" "1"
+		"enabled" "1"
+		"wide"	 "640"
+		"tall"	 "480"
+	}
+
+	HudViewfinder
+	{
+		"fieldName" "HudViewfinder"
+		"visible" "1"
+		"enabled" "1"
+		"wide"	 "640"
+		"tall"	 "480"
+	}
+
+	HudPhotoInventory
+	{
+		"fieldName" "HudPhotoInventory"
+		"visible" "1"
+		"enabled" "1"
+		"wide"	 "640"
+		"tall"	 "480"
+	}
 }
