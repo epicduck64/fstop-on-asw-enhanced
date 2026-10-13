@@ -86,6 +86,10 @@ GameConfig.txt
 /src/materialsystem/shaderlib/Release*/
 
 # --- runtime junk ---
+# Hammer autosaves are per-mapper session state, not content. hammer.bat -writeconfig
+# repoints Hammer's autosave folder at game\bin\HammerAutosave\, so it is recreated on
+# demand and nothing here needs to ship.
+/game/bin/HammerAutosave/*.vmf_autosave
 /game/portal_template/console*
 /game/portal_template/*.tmp
 /game/portal_template/*.dt
