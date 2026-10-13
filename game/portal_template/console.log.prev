@@ -1,0 +1,126 @@
+NET_GetBindAddresses found 10.40.0.4: 'Intel(R) Ethernet Connection (7) I219-V'
+Opened Steam Socket NS_SERVER ( virtual port 27015 ) : listen socket handle( 839 )
+Opened Steam Socket NS_CLIENT ( virtual port 27005 ) : listen socket handle( 66376 )
+Network: IP 10.40.0.4, mode MP, dedicated No, ports 27015 SV / 27005 CL
+Parent cvar in client.dll not allowed (rr_debugresponseconcept)
+Parent cvar in client.dll not allowed (rr_dumpresponses)
+Parent cvar in client.dll not allowed (rr_debugrule)
+Parent cvar in client.dll not allowed (rr_debugresponses)
+WARNING: unable to link rr_debugresponseconcept_exclude and rr_debugresponseconcept_exclude because one or more is a ConCommand.
+WARNING: unable to link creditsdone and creditsdone because one or more is a ConCommand.
+WARNING: unable to link rr_reloadresponsesystems and rr_reloadresponsesystems because one or more is a ConCommand.
+Particles: Missing 'particles/hunter_flechette.pcf'
+CResponseSystem:  scripts\talker\response_rules.txt (0 rules, 3 criteria, and 1 responses)
+CGameEventManager::AddListener: event 'round_start_pre_entity' unknown.
+CGameEventManager::AddListener: event 'teamplay_round_start' unknown.
+maxplayers set to 1
+CGameEventManager::AddListener: event 'server_pre_shutdown' unknown.
+CGameEventManager::AddListener: event 'campaign_changed' unknown.
+CGameEventManager::AddListener: event 'finale_start' unknown.
+CGameEventManager::AddListener: event 'difficulty_changed' unknown.
+CGameEventManager::AddListener: event 'swarm_state_changed' unknown.
+Running -nogameui mode, using client module instead of gameui
+Steam config directory: C:\Users\epic-devel\Documents\f-stop\refs\fstop-on-asw-enhanced\game\platform\config
+Didn't find particle function Cull when crossing sphere
+Didn't find particle function Cull when crossing sphere
+Didn't find particle function Cull when crossing sphere
+Didn't find particle function Cull when crossing sphere
+Particles: Missing 'particles/hunter_flechette.pcf'
+No split screen config file 'splitscreen_config.txt', using defaults
+KV Conditional: Unknown symbol OSX
+KV Conditional: Unknown symbol OSX
+KV Conditional: Unknown symbol OSX
+KV Conditional: Unknown symbol OSX
+CGameEventManager::AddListener: event 'player_fullyjoined' unknown.
+CGameEventManager::AddListener: event 'achievement_earned' unknown.
+CGameEventManager::AddListener: event 'player_fullyjoined' unknown.
+CGameEventManager::AddListener: event 'achievement_earned' unknown.
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\shared\usermessages.cpp (133) : Assertion Failed: engine->IsLocalPlayerResolvable()
+CResponseSystem:  scripts\talker\response_rules.txt (0 rules, 3 criteria, and 1 responses)
+CGameEventManager::AddListener: event 'set_instructor_group_enabled' unknown.
+cc_lang = 
+Unknown command "cl_thirdperson"
+Sound Initialization: Start
+DS:stereo speaker configuration detected
+Set primary sound buffer format: yes
+Using secondary sound buffer
+   2 channel(s)
+   16 bits/sample
+   44100 samples/sec
+DirectSound initialized
+Stopping All Sounds...
+Trying cache :  'c:/users/epic-devel/documents/f-stop/refs/fstop-on-asw-enhanced/game/portal_template/maps/soundcache/_master.cache'
+Successfully loaded audio cache file
+Sound Initialization: Finish, Sampling Rate: 44100
+Stopping All Sounds...
+CGameUIConVarRef mp_gamemode doesn't point to an existing ConVar
+---- Host_NewGame ----
+Network: IP 10.40.0.4, mode SP, dedicated No, ports 0 SV / 0 CL
+Network: IP 10.40.0.4, mode MP, dedicated No, ports 27015 SV / 27005 CL
+#######################################
+Map devtest missing stringtable dictionary, don't ship this way!!!
+#######################################
+Host_NewGame on map devtest
+CHalfLife2 created
+player/chell/player.mdl/player_animations.mdl : missmatched parent bones on "weapon_bone"
+==== calling mapspawn.nut
+DEBUG HISTORY IS ENABLED. Disable before release (in env_debughistory.h).
+prop_personality_sphere at (384.000, -64.000, -448.006) has no model name!
+C:\Users\epic-devel\Documents\f-stop\refs\fstop-on-asw-enhanced\src\game\server\baseanimating.cpp (2022) : Couldn't find attachment eyeball on skeleton props_bts/glados_ball_reference.mdl for object template_test
+
+C:\Users\epic-devel\Documents\f-stop\refs\fstop-on-asw-enhanced\src\game\server\portal\prop_portal.cpp (2263) : Assertion Failed: s_PortalLinkageGroups[m_iLinkageGroupID].Find( this ) != -1
+C:\Users\epic-devel\Documents\f-stop\refs\fstop-on-asw-enhanced\src\game\server\portal\prop_portal.cpp (261) : Assertion Failed: s_PortalLinkageGroups[m_iLinkageGroupID].Find( this ) == -1
+PrecacheScriptSound 'E3_Phystown.Slicer' failed, no such sound script entry
+C:\Users\epic-devel\Documents\f-stop\refs\fstop-on-asw-enhanced\src\game\server\portal\prop_portal.cpp (2263) : Assertion Failed: s_PortalLinkageGroups[m_iLinkageGroupID].Find( this ) != -1
+C:\Users\epic-devel\Documents\f-stop\refs\fstop-on-asw-enhanced\src\game\server\portal\prop_portal.cpp (261) : Assertion Failed: s_PortalLinkageGroups[m_iLinkageGroupID].Find( this ) == -1
+Heartbeat is disabled (usually developer or cheats is on).
+m_eServerMode pre = 0
+m_eServerMode post = 2
+1.000:  Sending UDP connect to public IP 127.0.0.1:27015
+Server using '<none>' lobbies, requiring pw no, lobby id 0
+RememberIPAddressForLobby: lobby 0 from address loopback
+C_HalfLife2 created
+Connection to Steam servers successful.
+   VAC secure mode disabled.
+KeyValues Error: RecursiveLoadFromBuffer:  got EOF instead of keyname in file materials/particle/particle_ring_wave_12.vmt
+spritecard, 
+==== calling mapspawn.nut
+Receiving uncompressed update from server
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\client\c_baseanimating.h (785) : Assertion Failed: pModelCache->IsFrameLocking()
+Bad sequence (-1 out of 32 max) in GetSequenceLinearMotion() for model 'player.mdl'!
+Bad sequence (-1 out of 32 max) in GetSequenceLinearMotion() for model 'player.mdl'!
+Bad sequence (-1 out of 32 max) in GetSequenceLinearMotion() for model 'player.mdl'!
+Bad sequence (-1 out of 32 max) in GetSequenceLinearMotion() for model 'player.mdl'!
+Bad sequence (-1 out of 32 max) in GetSequenceLinearMotion() for model 'player.mdl'!
+Bad sequence (-1 out of 32 max) in GetSequenceLinearMotion() for model 'player.mdl'!
+Bad sequence (-1 out of 32 max) in GetSequenceLinearMotion() for model 'player.mdl'!
+Bad sequence (-1 out of 32 max) in GetSequenceLinearMotion() for model 'player.mdl'!
+Bad sequence (-1 out of 32 max) in GetSequenceLinearMotion() for model 'player.mdl'!
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\public\studio.cpp (923) : Assertion Failed: i >= 0 && i < GetNumSeq()
+MDBG z=-408.0 curVel.z=0.0 physVel.z=-0.0 force.z=0.0 hullz=-4.0..4.0 eng=1.00
+MDBG     target=(0.0 0.0 0.0) goal=(0.0 0.0 0.0) goalactive=0 navtype=2 loiter=0
+Redownloading all lightmaps
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\client\modelrendersystem.cpp (820) : Model fast path: illumposition must be (0,0,0) if an attachment is being used!
+
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\client\modelrendersystem.cpp (820) : Model fast path: illumposition must be (0,0,0) if an attachment is being used!
+
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\client\modelrendersystem.cpp (820) : Model fast path: illumposition must be (0,0,0) if an attachment is being used!
+
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\client\modelrendersystem.cpp (820) : Model fast path: illumposition must be (0,0,0) if an attachment is being used!
+
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\client\modelrendersystem.cpp (820) : Model fast path: illumposition must be (0,0,0) if an attachment is being used!
+
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\client\modelrendersystem.cpp (820) : Model fast path: illumposition must be (0,0,0) if an attachment is being used!
+
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\client\modelrendersystem.cpp (820) : Model fast path: illumposition must be (0,0,0) if an attachment is being used!
+
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\client\modelrendersystem.cpp (820) : Model fast path: illumposition must be (0,0,0) if an attachment is being used!
+
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\client\modelrendersystem.cpp (820) : Model fast path: illumposition must be (0,0,0) if an attachment is being used!
+
+C:\Users\epic-devel\Documents\f-stop\refs\Enhanced-Source-master\src\game\client\modelrendersystem.cpp (820) : Model fast path: illumposition must be (0,0,0) if an attachment is being used!
+
+epicduck410 unpaused the game
+epicduck410 unpaused the game
+MDBG z=-439.1 curVel.z=-80.3 physVel.z=-80.3 force.z=0.0 hullz=-4.0..4.0 eng=1.00
+MDBG     target=(0.0 0.0 0.0) goal=(-64.0 0.0 -446.0) goalactive=1 navtype=2 loiter=0

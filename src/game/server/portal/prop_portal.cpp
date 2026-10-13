@@ -258,8 +258,12 @@ void CProp_Portal::Spawn( void )
 {
 	Precache();
 
-	Assert( s_PortalLinkageGroups[m_iLinkageGroupID].Find( this ) == -1 );
-	s_PortalLinkageGroups[m_iLinkageGroupID].AddToTail( this );
+	// Idempotent, matching the guard Activate() uses further down. A portal can legitimately
+	// be in its linkage group before it is spawned - prop_portal_linked_door creates one and
+	// calls ChangeLinkageGroup on it before DispatchSpawn - so the old unconditional Assert
+	// fired once per portal created that way.
+	if ( s_PortalLinkageGroups[m_iLinkageGroupID].Find( this ) == -1 )
+		s_PortalLinkageGroups[m_iLinkageGroupID].AddToTail( this );
 
 	m_matrixThisToLinked.Identity(); //don't accidentally teleport objects to zero space
 	
@@ -2260,7 +2264,9 @@ void CProp_Portal::UpdateCorners()
 
 void CProp_Portal::ChangeLinkageGroup( unsigned char iLinkageGroupID )
 {
-	Assert( s_PortalLinkageGroups[m_iLinkageGroupID].Find( this ) != -1 );
+	// No assert here: a portal that has not been spawned yet is in no group, which is the
+	// state prop_portal_linked_door puts a freshly created portal in when it changes the
+	// group before DispatchSpawn. FindAndRemove is a no-op when the entry is absent.
 	s_PortalLinkageGroups[m_iLinkageGroupID].FindAndRemove( this );
 	s_PortalLinkageGroups[iLinkageGroupID].AddToTail( this );
 	m_iLinkageGroupID = iLinkageGroupID;

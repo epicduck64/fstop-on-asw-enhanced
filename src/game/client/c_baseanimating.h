@@ -782,7 +782,13 @@ inline CStudioHdr *C_BaseAnimating::GetModelPtr() const
 #ifndef _X360
 	// 360's don't need to lock the modeldata cache since it never flushes
 	static IDataCacheSection *pModelCache = g_pDataCache->FindSection( "ModelData" );
-	AssertOnce( pModelCache->IsFrameLocking() );
+	// Only meaningful once we actually hold a hdr. GetModelPtr() is called long before the
+	// modeldata cache is frame-locked - that is what the next line exists to handle - so
+	// asserting unconditionally made this fire once on every map load.
+	if ( m_pStudioHdr )
+	{
+		AssertOnce( pModelCache->IsFrameLocking() );
+	}
 #endif
 #endif
 	// GetModelPtr() is often called before OnNewModel() so go ahead and set it up first chance.

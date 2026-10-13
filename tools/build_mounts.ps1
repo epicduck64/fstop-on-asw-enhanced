@@ -332,10 +332,29 @@ foreach ($t in $LeakMirrors.Keys) {
 if ($mirrored) { Write-Host ("  mirrored leak subtrees (also skipped) {0,6:N0}" -f $mirrored) }
 
 # ------------------------------------------------------- retail mount -------
+# A model's files have to come from one provider. The engine checksums the companions
+# against the .mdl, so a retail .vtx paired with a leak .mdl is rejected and the whole
+# model fails to load - modelrendersystem.cpp:292, "if the vtx and mdl are out of
+# sync". metal_box was the expensive case: retail supplied the .vtx, the leak the
+# .mdl, and the model failed to load 51,560 times in a single session. If the .mdl is
+# provided above retail, its companions are left to whoever provides the .mdl.
+$ModelCompanionExt = @('.vtx','.vvd','.phy','.ani','.vvc')
+function Test-CompanionSupplanted([string]$rel) {
+    $ext = [IO.Path]::GetExtension($rel)
+    if (-not $ext -or ($ModelCompanionExt -notcontains $ext.ToLowerInvariant())) { return $false }
+    $dir = ''; $leaf = $rel
+    $slash = $rel.LastIndexOf('/')
+    if ($slash -ge 0) { $dir = $rel.Substring(0, $slash + 1); $leaf = $rel.Substring($slash + 1) }
+    $stem = $leaf.Substring(0, $leaf.Length - $ext.Length) -replace '\.(dx80|dx90|dx11|sw|gl|360)$',''
+    return $provided.Contains($dir + $stem + '.mdl')
+}
+
 $retailPlan = @{}
 $retailSize = 0L
+$supplanted = 0
 foreach ($k in $index.Keys) {
     if ($provided.Contains($k)) { continue }          # the mod/base/leak already supplies it
+    if (Test-CompanionSupplanted $k) { $supplanted++; continue }   # keep the model whole
     if (-not (Test-Asset $k)) { continue }
     if (Test-Blacklisted $k) { continue }
     $src = $index[$k][0]
@@ -357,6 +376,7 @@ if (Test-Path $PickList) {
         foreach ($c in $cands) {
             if (-not $index.ContainsKey($c)) { continue }
             if ($provided.Contains($c) -or $retailPlan.ContainsKey($c)) { $hit = $true; continue }
+            if (Test-CompanionSupplanted $c) { $supplanted++; $hit = $true; continue }   # its .mdl is provided elsewhere
             foreach ($s in $index[$c]) {
                 if ($pin -and $s.Game -ne $pin) { continue }
                 $retailPlan[$c] = $s; $retailSize += (Get-Size $s); $hit = $true; break
@@ -373,6 +393,7 @@ Write-Host ""
 Write-Host "== retail (generated; excludes everything already provided) ==" -ForegroundColor Cyan
 Write-Host ("  {0:N0} files, {1:N1} MB" -f $retailPlan.Count, ($retailSize/1MB))
 $byGame.Keys | Sort-Object { -$byGame[$_] } | ForEach-Object { Write-Host ("      {0,-8} {1,8:N0}" -f $_, $byGame[$_]) }
+if ($supplanted) { Write-Host ("  model companions left with their .mdl's provider: {0,6:N0}" -f $supplanted) }
 if ($pickMissing.Count) {
     Write-Host ("  picks unresolved: {0}" -f $pickMissing.Count) -ForegroundColor Yellow
     foreach ($pm in ($pickMissing | Select-Object -First 10)) { Write-Host ("      " + $pm) -ForegroundColor Yellow }

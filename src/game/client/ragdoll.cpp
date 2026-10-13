@@ -159,7 +159,15 @@ void CRagdoll::Init(
 	}
 
 	RagdollApplyAnimationAsVelocity( m_ragdoll, pDeltaBones0, pDeltaBones1, dt );
-	RagdollActivate( m_ragdoll, params.pCollide, ent->GetModelIndex() );
+
+	// As in CRagdollProp::InitRagdoll: only activate a ragdoll that was actually created.
+	// RagdollCreate leaves listCount at zero when the model has no collision model, and
+	// activating an empty ragdoll trips Assert(pCollide) in RagdollSetupCollisions.
+	if ( m_ragdoll.listCount && params.pCollide )
+	{
+		RagdollActivate( m_ragdoll, params.pCollide, ent->GetModelIndex() );
+	}
+
 	m_ragdoll.list[0].pObject->GetPosition( &m_origin, 0 );
 
 	// It's moving now...

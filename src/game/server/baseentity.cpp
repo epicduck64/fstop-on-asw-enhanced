@@ -1966,8 +1966,13 @@ int CBaseEntity::VPhysicsTakeDamage( const CTakeDamageInfo &info )
 		if ( bNoPhysicsForceDamage || info.GetDamageType() == DMG_GENERIC )
 			return 1;
 
-	// Bash/Shooting wants to set 0 force to not shove heavy physics props at all
-	if ( (info.GetDamageType() & (DMG_BULLET | DMG_CLUB)) && info.GetDamageForce().IsZero() )
+	// A zero force means "don't shove" - bash/shooting set it for heavy props, and the port's
+	// own damage paths do the same where they have no force to impart. Applying a zero force
+	// at the bottom of this function is already a no-op, so bail here instead of reaching the
+	// Assert that expects a non-zero force and offset.
+	// (Was: only DMG_BULLET | DMG_CLUB were exempted, so any other damage type carrying a
+	// deliberate zero force tripped the assert.)
+	if ( info.GetDamageForce().IsZero() )
 		return 1;
 
 	Assert(VPhysicsGetObject() != NULL);

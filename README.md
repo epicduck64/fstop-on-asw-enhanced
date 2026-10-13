@@ -220,16 +220,6 @@ asset errors that blocked the build and gameplay, and the engine-side additions 
   `water_leaks`, `portal2_coop_ping_effect`, `laser_relay_effects`), and `cfg/autoexec.cfg` now sets
   `hud_show_control_helper 1` — the leak defaults it to 0, which leaves the capture/place UI
   invisible.
-- **Retail mount: 1,843 extracted text assets arrived corrupt.** The VPK reader in
-  `tools/build_mounts.ps1` took each entry's preload bytes out of the tree for every VPK version. v1
-  keeps them inline (they are the file's first bytes), but **v2** — HL2, Portal 1 and Portal 2
-  retail, L4D2, CS:GO — stores them in a separate region, so the two bytes sitting there are the
-  entry terminator `FF FF`. Those were prepended, so materials such as
-  `materials/particle/particle_ring_wave_12.vmt` began with junk and failed as
-  `uses unknown shader "??spritecard"`, followed by `$basetexture … is not a texture value`.
-  **Fixed by** stripping the two bytes from every affected file (1,912 `.vmt`, 23 `.res`, 4 `.txt`)
-  and changing the reader to skip the preload for `$ver -ge 2`, so a fresh `build_mounts` cannot
-  reintroduce it.
 - **The android missile's explosion effect was never in the mount set.** `Explode()` dispatches
   `hunter_projectile_explosion_1`, and the entity precaches `hunter_flechette_trail` and
   `hunter_flechette_trail_striderbuster` — the Hunter's EP2 particle systems. Retail ships them

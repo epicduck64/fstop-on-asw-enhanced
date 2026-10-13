@@ -130,7 +130,12 @@ void CUserMessages::HookMessage( const char *name, pfnUserMsgHook hook )
 		return;
 	}
 
-	ASSERT_LOCAL_PLAYER_RESOLVABLE();
+	// Deliberately no ASSERT_LOCAL_PLAYER_RESOLVABLE() here. Hooks are registered during
+	// client init, before the local player exists, so the assert fired on every map load -
+	// and the SPLIT_SCREEN_STUBS configuration compiles exactly this assert out for the
+	// same reason (cdll_client_int.h:228). The hook lands in the active slot's list, which
+	// is slot 0 until a player is resolvable, which is where a registration-time hook wants
+	// to be anyway.
 
 	int i = m_UserMessages[ idx ]->clienthooks[ GET_ACTIVE_SPLITSCREEN_SLOT() ].AddToTail();
 	m_UserMessages[ idx ]->clienthooks[GET_ACTIVE_SPLITSCREEN_SLOT()][i] = hook;
