@@ -465,6 +465,9 @@ void CWeaponPlacement::PlacePhoto(void)
 			// nothing with a dead tool still in the inventory, so take it away instead.
 			if (pPlayer->HasNamedPlayerItem("weapon_camera") == false)
 			{
+				// The preview hologram is not owned by the weapon list; destroy it here
+				// or it is orphaned in the world when the tool is removed.
+				DestroyPhotoPreview();
 				pPlayer->RemovePlayerItem(this);
 				UTIL_Remove(this);
 			}

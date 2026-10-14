@@ -96,15 +96,18 @@ CHudPhotoFlash::CHudPhotoFlash( const char *pElementName ) : CHudElement(pElemen
 //-----------------------------------------------------------------------------
 void CHudPhotoFlash::Init( void )
 {
-	static bool bHook = true;
-	if( bHook ) //avoid repeatedly hooking the same message (so we don't process it a bunch)
+	// Init() is also called from Reset() on every level load, so hook the message
+	// and create the texture only once; otherwise each load leaks a texture ID.
+	static bool bSetup = false;
+	if( bSetup == false )
 	{
-		HOOK_HUD_MESSAGE( CHudPhotoFlash, Flash );
-		bHook = false;
-	}
+		bSetup = true;
 
-	m_nFlashTexture = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile( m_nFlashTexture, szFlashMaterial, true, false );
+		HOOK_HUD_MESSAGE( CHudPhotoFlash, Flash );
+
+		m_nFlashTexture = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile( m_nFlashTexture, szFlashMaterial, true, false );
+	}
 
 	m_flDisplayTime = 0.0f;
 	m_flStartTime = 0.0f;

@@ -121,33 +121,36 @@ CHudPhotoInventory::CHudPhotoInventory(const char *pElementName) : CHudElement(p
 //-----------------------------------------------------------------------------
 void CHudPhotoInventory::Init(void)
 {
-	static bool bHook = true;
-	if (bHook) //avoid repeatedly hooking the same message (so we don't process it a bunch)
+	// Init() is also called from Reset() on every level load, so hook the messages
+	// and create the textures only once; otherwise each load leaks six texture IDs.
+	static bool bSetup = false;
+	if (bSetup == false)
 	{
+		bSetup = true;
+
 		HOOK_HUD_MESSAGE(CHudPhotoInventory, InventoryFlash);
 		HOOK_HUD_MESSAGE(CHudPhotoInventory, TakePhoto);
-		bHook = false;
+
+		//numbers
+		m_nPhotoNumberTexture[0] = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile(m_nPhotoNumberTexture[0], "HUD/inv_photo_numbers1", true, false);
+
+		m_nPhotoNumberTexture[1] = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile(m_nPhotoNumberTexture[1], "HUD/inv_photo_numbers2", true, false);
+
+		m_nPhotoNumberTexture[2] = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile(m_nPhotoNumberTexture[2], "HUD/inv_photo_numbers3", true, false);
+
+		//snapshots
+		m_nPhotoTexture[0] = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile(m_nPhotoTexture[0], "HUD/inv_photo1", true, false);
+
+		m_nPhotoTexture[1] = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile(m_nPhotoTexture[1], "HUD/inv_photo2", true, false);
+
+		m_nPhotoTexture[2] = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile(m_nPhotoTexture[2], "HUD/inv_photo3", true, false);
 	}
-
-	//numbers
-	m_nPhotoNumberTexture[0] = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile(m_nPhotoNumberTexture[0], "HUD/inv_photo_numbers1", true, false);
-
-	m_nPhotoNumberTexture[1] = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile(m_nPhotoNumberTexture[1], "HUD/inv_photo_numbers2", true, false);
-
-	m_nPhotoNumberTexture[2] = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile(m_nPhotoNumberTexture[2], "HUD/inv_photo_numbers3", true, false);
-
-	//snapshots
-	m_nPhotoTexture[0] = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile(m_nPhotoTexture[0], "HUD/inv_photo1", true, false);
-
-	m_nPhotoTexture[1] = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile(m_nPhotoTexture[1], "HUD/inv_photo2", true, false);
-
-	m_nPhotoTexture[2] = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile(m_nPhotoTexture[2], "HUD/inv_photo3", true, false);
 
 	m_bWasPlacing = false;
 	m_nFlashType = FLASH_INVENTORY_BASIC;

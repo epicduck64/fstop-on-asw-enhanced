@@ -24,6 +24,13 @@ The port is not a pure implementation of the source leak. It includes targeted f
 - **Zombie physics:** Restore the missing null-collision-data check in `CNPC_BaseZombie::FindNearestPhysicsObject`.
 - **Class compatibility:** Correct `CPortalGameRules` and `CPortal_Player` inheritance, register `CTriggerCallback`, and fix trigger collision handling.
 
+### Memory Leak Fixes
+
+- **Placement prop KeyValues leak:** `UTIL_GetPropPlacementData` allocated a `KeyValues` to read a prop's `prop_alignment` QC block, then returned early — without freeing it — when the model had no `prop_alignment` (the common case) or its keyvalues failed to parse. It runs once per frame while a captured physics prop is held in the photo placement tool, so it leaked continuously during placement, and the leaked memory survived level changes (`KeyValues` has no garbage collector: its destructor is private and `deleteThis()` is the only free path). Both early returns now free the `KeyValues`.
+- **Scaled-physics collision query:** `UTIL_CreateScaledPhysObject` now frees its `ICollisionQuery` via `DestroyQueryModel` on the convex-conversion failure path, which previously returned before the cleanup.
+- **Placement preview orphan:** `CWeaponPlacement::PlacePhoto` destroys the preview hologram before removing the tool, so it is no longer left behind in the world.
+- **HUD texture recreation:** The F-STOP HUD elements (`CHudIndicator`, `CHudControlHelper`, `CHudPhotoInventory`, `CHudPhotoFlash`) allocate their surface textures and hook their messages only once instead of on every `Reset()` (i.e. every level load).
+
 ### Gameplay and Build Fixes
 
 - **Weapon switching:** Fix placement-tool ownership, server/client registration, auto-switch settings, deployment checks, and weapon-wheel slots.

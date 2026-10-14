@@ -347,7 +347,11 @@ bool UTIL_CreateScaledPhysObject( CBaseAnimating *pInstance, float flScale )
 			pConvexes[i] = physcollision->ConvexFromVerts( ppVerts, nNumVerts );
 			Assert( pConvexes[i] != NULL );
 			if ( pConvexes[i] == NULL )
+			{
+				// Free the query before bailing, or it leaks on this failure path.
+				physcollision->DestroyQueryModel( pQuery );
 				return false;
+			}
 		}
 
 		// Clean up

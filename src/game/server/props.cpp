@@ -6520,11 +6520,17 @@ bool UTIL_GetPropPlacementData( const char *lpszModelName, CPhysicsProp::CPhotoP
 	MEM_ALLOC_CREDIT();
 	KeyValues *modelKeyValues = new KeyValues("");
 	if ( modelKeyValues->LoadFromBuffer( lpszModelName, modelinfo->GetModelKeyValueText( model ) ) == false )
+	{
+		modelKeyValues->deleteThis();
 		return false;
+	}
 
 	KeyValues *pkvPropData = modelKeyValues->FindKey( "prop_alignment" );
 	if ( pkvPropData == NULL )
+	{
+		modelKeyValues->deleteThis();
 		return false;
+	}
 
 	// Parse the origin offset
 	char const *pszBase = pkvPropData->GetString( "offset" );

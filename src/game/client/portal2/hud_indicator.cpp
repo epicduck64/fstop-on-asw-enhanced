@@ -77,13 +77,22 @@ CHudIndicator::CHudIndicator( const char *pElementName ) : CHudElement(pElementN
 //-----------------------------------------------------------------------------
 void CHudIndicator::Init( void )
 {
-	HOOK_HUD_MESSAGE( CHudIndicator, IndicatorFlash );
-	
-	m_nTexture[0] = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile( m_nTexture[0], "HUD/invalid", true, false );
+	// Init() is also called from Reset() on every level load. Hook the message and
+	// create the textures only once; otherwise each load leaks two surface texture
+	// IDs and double-hooks the HUD message.
+	static bool bSetup = false;
+	if ( bSetup == false )
+	{
+		bSetup = true;
 
-	m_nTexture[1] = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile( m_nTexture[1], "HUD/inv_full", true, false );
+		HOOK_HUD_MESSAGE( CHudIndicator, IndicatorFlash );
+
+		m_nTexture[0] = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile( m_nTexture[0], "HUD/invalid", true, false );
+
+		m_nTexture[1] = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile( m_nTexture[1], "HUD/inv_full", true, false );
+	}
 
 	m_flDisplayTime = 0.0f;
 	m_flStartTime = 0.0f;
@@ -269,16 +278,25 @@ CHudControlHelper::CHudControlHelper( const char *pElementName ) : CHudElement(p
 //-----------------------------------------------------------------------------
 void CHudControlHelper::Init( void )
 {
-	HOOK_HUD_MESSAGE( CHudControlHelper, ControlHelperAnimate );
+	// Init() is also called from Reset() on every level load. Hook the message and
+	// create the textures only once; otherwise each load leaks three surface texture
+	// IDs and double-hooks the HUD message.
+	static bool bSetup = false;
+	if ( bSetup == false )
+	{
+		bSetup = true;
 
-	m_nTexture[0] = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile( m_nTexture[0], "HUD/hud_icon_camera", true, false );
+		HOOK_HUD_MESSAGE( CHudControlHelper, ControlHelperAnimate );
 
-	m_nTexture[1] = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile( m_nTexture[1], "HUD/hud_icon_neutral", true, false );
+		m_nTexture[0] = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile( m_nTexture[0], "HUD/hud_icon_camera", true, false );
 
-	m_nTexture[2] = surface()->CreateNewTextureID();
-	surface()->DrawSetTextureFile( m_nTexture[2], "HUD/hud_icon_picture", true, false );
+		m_nTexture[1] = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile( m_nTexture[1], "HUD/hud_icon_neutral", true, false );
+
+		m_nTexture[2] = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile( m_nTexture[2], "HUD/hud_icon_picture", true, false );
+	}
 
 	m_flDisplayTime = 0.0f;
 	m_flStartTime = 0.0f;
