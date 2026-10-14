@@ -50,6 +50,10 @@ game_sounds_manifest
 	// them or the engine never precaches the entries and every script sound fails.
 	"precache_file"		"scripts/npc_sounds_manhack.txt"
 	"precache_file"		"scripts/npc_sounds_headcrab.txt"
+	"precache_file"		"scripts/npc_sounds_antlion.txt"
+	"precache_file"		"scripts/npc_sounds_antlionguard.txt"
+	"precache_file"		"scripts/npc_sounds_hover_turret.txt"
+	"precache_file"		"scripts/npc_sounds_zombie_aperture.txt"
 
 	// Portal 2 / F-STOP NPC + prop sounds
 	"precache_file"		"scripts/npc_sounds_android.txt"
