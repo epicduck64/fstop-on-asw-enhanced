@@ -46,7 +46,6 @@ public:
 #endif
 
 #ifdef PORTAL2
-	// F-STOP ("Aperture")
 	CNetworkArray( int, m_nLocatorEntityIndices, 16 );
 	CNetworkVar( bool, m_bPlacingPhoto );
 #endif //PORTAL2

@@ -9,7 +9,7 @@
 #include "ai_utils.h"
 
 // Used for maintaining unique IDs to portals
-int g_PortalGUID = 0;	// F-STOP ("Aperture"): definition (was extern-only in the leaked source)
+int g_PortalGUID = 0;	// F-STOP ("Aperture")
 
 class CPropBuilding : public CBaseAnimating
 {
@@ -179,9 +179,7 @@ bool CPropBuilding::CPhotoPlacementQuery::GetPlacementPosition( CaptureInfo_t &c
 															   Vector &positionOut,
 															   QAngle &anglesOut )
 {
-	// F-STOP ("Aperture"): the leaked body of this function referenced identifiers that are not
-	// part of this signature (an incomplete/older iteration). Fall back to the standard
-	// placement logic used by the other capturable props.
+	// F-STOP ("Aperture"): the leaked body referenced identifiers outside this signature; use the standard placement logic.
 	return GetPlacementPosition_NoHelper( captureInfo, placementData, positionOut, anglesOut );
 }
 

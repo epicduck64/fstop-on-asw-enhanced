@@ -2320,7 +2320,6 @@ bool CProp_Portal::IsFloorPortal(float fThreshold) const
 }
 
 //-----------------------------------------------------------------------------
-// F-STOP ("Aperture"): linkage IDs + portal resize (Portal 2 additions)
 //-----------------------------------------------------------------------------
 unsigned char UTIL_GetUnusedLinkageID( void )
 {
@@ -2351,10 +2350,7 @@ unsigned char UTIL_GetUnusedLinkageID( void )
 
 void CProp_Portal::Resize( float fHalfWidth, float fHalfHeight )
 {
-	// F-STOP ("Aperture"): Portal 2 added runtime portal resizing. The Alien Swarm base does not
-	// carry the required support (network half-extents, CPortalSimulator::SetSize, and
-	// CPhysicsCloneArea::Resize), so runtime resizing is unavailable here and this is a no-op.
-	// Portal dimensions remain the fixed defaults (PORTAL_HALF_WIDTH / PORTAL_HALF_HEIGHT).
+	// FIXME: this ASW branch has no support for resizable portals, so this is a no-op.
 	NOTE_UNUSED( fHalfWidth );
 	NOTE_UNUSED( fHalfHeight );
 }

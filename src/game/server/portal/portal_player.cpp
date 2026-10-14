@@ -386,8 +386,7 @@ void CPortal_Player::GiveAllItems( void )
 	}
 
 #ifdef PORTAL2
-	// F-STOP ("Aperture"): the leaked GiveAllItems also grants the camera + placement tool, fully
-	// upgraded. Without this hunk, impulse 101 never hands out the camera.
+	// F-STOP ("Aperture"): impulse 101 grants the camera + placement tool.
 	GiveNamedItem( "weapon_camera" );
 	GiveNamedItem( "weapon_placement" );
 
@@ -2362,9 +2361,6 @@ CON_COMMAND( startneurotoxins, "Starts the nerve gas timer." )
 }
 
 #ifdef PORTAL2
-//------------------------------------------------------------------------------
-// F-STOP ("Aperture") camera/photo interface
-//------------------------------------------------------------------------------
 void CPortal_Player::SetPlacingPhoto( bool bPlacing )
 {
 	m_HL2Local.m_bPlacingPhoto = bPlacing;
@@ -2523,9 +2519,7 @@ void CPortal_Player::UpdateLocatorEntityIndices( int *pIndices, int nNumIndices 
 	}
 }
 //-----------------------------------------------------------------------------
-// Purpose: Forward mouse wheel input to the active weapon (the camera zooms its FOV, the
-//			placement tool resizes the held object). Ported from the leak's hl2_player.cpp —
-//			ASW's server doesn't build that file (the Portal template uses CPortal_Player).
+// Purpose: Forward mouse wheel input to the active weapon (camera FOV, placement resize).
 //-----------------------------------------------------------------------------
 void CC_MWheel_Up( void )
 {

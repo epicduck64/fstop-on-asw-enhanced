@@ -239,7 +239,6 @@ public:
 
 #ifdef PORTAL2
 public:
-	// F-STOP ("Aperture") camera/photo interface
 	virtual void InitialSpawn( void );
 	virtual void ItemPostFrame( void );
 	void	SetPlacingPhoto( bool bPlacing );

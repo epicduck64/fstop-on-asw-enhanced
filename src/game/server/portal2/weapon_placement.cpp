@@ -229,10 +229,7 @@ private:
 	bool					m_bInPlacementMode;
 };
 
-// F-STOP ("Aperture"): the leaked source had this commented out, leaving CWeaponPlacement with no
-// server class — so the client received it as a bare CBaseCombatWeapon and never loaded its weapon
-// data (no viewmodel, and the carried photo never rendered). Paired with the client-side
-// STUB_WEAPON_CLASS( weapon_placement, ... ) in client/portal/c_weapon_stubs_portal.cpp.
+// F-STOP ("Aperture"): server class for the placement tool; the leaked source left it commented out.
 IMPLEMENT_SERVERCLASS_ST( CWeaponPlacement, DT_WeaponPlacement )
 END_SEND_TABLE()
 

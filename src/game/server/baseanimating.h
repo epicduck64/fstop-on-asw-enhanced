@@ -364,7 +364,6 @@ public:
 #endif
 
 #ifdef PORTAL2
-	// F-STOP ("Aperture"): camera capture + photo placement query (branching)
 	START_BRANCHING_SINGLETON_DEFINITION( CPhotoPlacementQuery )
 	{
 	public:

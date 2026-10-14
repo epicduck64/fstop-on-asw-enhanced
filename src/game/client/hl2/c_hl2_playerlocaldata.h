@@ -47,7 +47,6 @@ public:
 #endif
 
 #ifdef PORTAL2
-	// F-STOP ("Aperture")
 	int		m_nLocatorEntityIndices[16];
 	bool	m_bPlacingPhoto;
 #endif

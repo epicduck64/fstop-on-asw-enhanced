@@ -10,7 +10,6 @@
 #include "particle_system.h"
 #include "triggers.h"
 
-// F-STOP/Aperture compat: newer-main std utilities assumed by the leaked source
 #include <algorithm>
 #ifndef min
 #define min(a,b)  (((a) < (b)) ? (a) : (b))

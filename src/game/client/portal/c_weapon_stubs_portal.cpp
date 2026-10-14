@@ -37,7 +37,6 @@ STUB_WEAPON_CLASS( weapon_crowbar, WeaponCrowbar, C_BaseHLBludgeonWeapon );
 STUB_WEAPON_CLASS( weapon_hopwire, WeaponHopwire, C_BaseHLCombatWeapon );
 
 #ifdef PORTAL2
-// F-STOP ("Aperture"): client counterparts for the camera / placement weapons
 STUB_WEAPON_CLASS( weapon_camera, WeaponCamera, C_BaseCombatWeapon );
 STUB_WEAPON_CLASS( weapon_placement, WeaponPlacement, C_BaseCombatWeapon );
 #endif // PORTAL2

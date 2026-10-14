@@ -98,7 +98,6 @@ class CGlobalEvent;
 typedef CUtlVector< CBaseEntity* > EntityList_t;
 
 #ifdef PORTAL2
-// F-STOP ("Aperture") photo/placement types (full definitions in portal2/photo.h)
 struct CaptureInfo_t;
 struct CameraInfo_ScaleData_t;
 struct CheckPlacementData_t;
@@ -1899,7 +1898,6 @@ public:
 public:
 
 #ifdef PORTAL2
-	// F-STOP ("Aperture"): photo placement query singleton (branching).
 	START_BRANCHING_SINGLETON_DEFINITION_NOBASE( CPhotoPlacementQuery )
 	{
 	public:

@@ -108,9 +108,7 @@ CWeaponCamera::CWeaponCamera( void ) : m_CurIndex( -1 ), m_bInViewfinder( false 
 	m_bFiresUnderwater	= true;
 
 	m_nNumCaptureSlots			= g_CurMaxInvPhotos;
-	// F-STOP ("Aperture"): the FGD declares these default to 1 (canzoom / canscale), but the
-	// constructor hard-coded false — so a camera created at runtime (give/ent_create) could never
-	// zoom or resize despite the wheel being wired up. Match the FGD.
+	// F-STOP ("Aperture"): the FGD defaults these to 1, but the constructor hard-coded false.
 	m_bCanZoom					= true;
 	m_bCanScaleCapturedObjects	= true;
 }
@@ -933,9 +931,7 @@ bool CWeaponCamera::Deploy( void )
 	{
 		pPlayer->SetPlacingPhoto( false );
 
-		// F-STOP ("Aperture"): the leaked source only granted the placement tool in OnPickedUp(),
-		// which never runs for a console-spawned camera. Without it the capture has no weapon to
-		// switch to and the player gets stuck holding the camera. Grant it here too.
+		// F-STOP ("Aperture"): OnPickedUp() never runs for a console-spawned camera, so grant the placement tool here too.
 		if ( pPlayer->HasNamedPlayerItem( "weapon_placement" ) == false )
 		{
 			pPlayer->GiveNamedItem( "weapon_placement" );
@@ -1078,9 +1074,7 @@ void CWeaponCamera::ItemPostFrame( void )
 	if ( pOwner == NULL )
 		return;
 
-	// F-STOP ("Aperture"): keep the placement tool in the player's inventory. The leaked code only
-	// granted it in OnPickedUp(), so a camera obtained any other way leaves the capture with nothing
-	// to switch to and the player stuck in the camera. Self-heal it here.
+	// F-STOP ("Aperture"): self-heal the placement tool if the camera was obtained outside OnPickedUp().
 	if ( pOwner->HasNamedPlayerItem( "weapon_placement" ) == false )
 	{
 		pOwner->GiveNamedItem( "weapon_placement" );

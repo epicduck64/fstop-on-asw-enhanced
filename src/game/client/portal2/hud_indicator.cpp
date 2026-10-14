@@ -323,11 +323,7 @@ void CHudControlHelper::ApplySchemeSettings( vgui::IScheme *scheme )
 	SetPaintBackgroundEnabled( false );
 	SetPaintBorderEnabled( false );
 
-	// ASW / Enhanced Source does not honour this panel's own position: the HUD paint path
-	// re-seats it at the screen origin every frame, so the leak's SetBounds offset is lost and
-	// the icon row ends up at the top of the screen. Take the origin the engine actually gives
-	// us (full screen) and fold the leak's vertical offset into the row position in Paint.
-	// Visual result is the same as the leak.
+	// ASW seats this panel at the screen origin every frame; use the full screen and fold the vertical offset into the row position.
 	SetBounds( 0, 0, ScreenWidth(), ScreenHeight() );
 }
 

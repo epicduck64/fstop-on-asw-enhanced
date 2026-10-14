@@ -22,7 +22,6 @@
 #include "te_effect_dispatch.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
-// F-STOP/Aperture compat: newer-main std utilities assumed by the leaked source
 #include <algorithm>
 #ifndef min
 #define min(a,b)  (((a) < (b)) ? (a) : (b))

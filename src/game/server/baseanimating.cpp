@@ -4115,8 +4115,6 @@ void CBaseAnimating::OnFizzled(void)
 
 #ifdef PORTAL2
 //
-//  F-STOP ("Aperture") photo placement query + capture callbacks
-//
 
 bool CBaseAnimating::CPhotoPlacementQuery::GetPlacementPosition_NoHelper( CaptureInfo_t &captureInfo,
 																		 CheckPlacementData_t &placementData,

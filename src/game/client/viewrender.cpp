@@ -3366,8 +3366,7 @@ void CViewRender::ViewDrawPhoto( ITexture *pRenderTarget, C_BaseEntity *pTargetE
 		ClientLeafSystem()->PreRender();
 	}
 
-	// A captured object is removed from the world for the photo, so it need not be
-	// ShouldDraw()/IsVisible() at this point (the leaked assert fires on every capture).
+	// The captured object is out of the world for the photo, so it need not be visible here.
 
 	CViewSetup photoview = m_CurrentView;
 	photoview.width = pRenderTarget->GetActualWidth();

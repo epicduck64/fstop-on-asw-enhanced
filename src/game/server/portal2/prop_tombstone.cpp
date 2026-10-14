@@ -21,7 +21,6 @@ public:
 	virtual void OnReleased( void );
 	virtual void DeathNotice( CBaseEntity *pVictim );
 
-	// F-STOP ("Aperture"): photo placement query (branching singleton)
 	START_BRANCHING_SINGLETON_DEFINITION( CPhotoPlacementQuery )
 	{
 	public:
@@ -43,10 +42,6 @@ private:
 	bool	m_bOnValidGround;
 };
 
-// The F-STOP original (models/props_fstop/tombstone001.mdl) was never shipped in
-// the leak. The user identified the intended asset in HLMV: HL2's gravestone_cross,
-// whose art F-STOP pulled in (tombstone001.vtf is pixel-identical to HL2's
-// gravestones001a.vtf).
 const char g_szModelName[] = "models/props_c17/gravestone_cross001a.mdl";
 
 const float RESPAWN_DELAY = 2.0f;
