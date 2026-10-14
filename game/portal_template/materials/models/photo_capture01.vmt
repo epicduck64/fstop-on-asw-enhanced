@@ -1,0 +1,19 @@
+"VertexLitGeneric"
+{
+	"$model" "1"
+
+	// Solve HDR rendering issue that causes this photo to become dim
+	//"$refracttinttexture" "models/photo_capture01_tint"
+	//"$detailblendfactor" 1
+	"$detailblendmode" 1
+	"$detail" "models/photo_capture_border01"
+	"$detailscale" 1
+	"$basetexture" "_rt_LargePhoto1"
+
+	"Proxies"
+	{
+		"PlacementPhoto"
+		{
+		}
+	}
+}
