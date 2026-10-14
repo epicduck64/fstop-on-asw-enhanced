@@ -2836,6 +2836,15 @@ bool C_BaseAnimating::SetupBones( matrix3x4a_t *pBoneToWorldOut, int nMaxBones, 
 		boneMask |= BONE_USED_BY_ANYTHING;
 	}
 
+	// A scaled model needs every bone set up. GetModelScale() is applied to root bones in
+	// BuildTransformations(), but only for bones that pass the mask, so a caller with a narrow mask
+	// (e.g. the model render system's per-LOD vertex mask) can omit the root and leave the model
+	// drawn at its unscaled size. Widen the mask to the one the normal render path uses.
+	if ( GetModelScale() > 1.0f + FLT_EPSILON || GetModelScale() < 1.0f - FLT_EPSILON )
+	{
+		boneMask |= BONE_USED_BY_ANYTHING;
+	}
+
 	// Set up all bones if recording, too
 	if ( IsToolRecording() )
 	{
@@ -3081,6 +3090,21 @@ bool C_BaseAnimating::SetupBones( matrix3x4a_t *pBoneToWorldOut, int nMaxBones, 
 		if ( nMaxBones >= m_CachedBoneData.Count() )
 		{
 			Plat_FastMemcpy( pBoneToWorldOut, m_CachedBoneData.Base(), sizeof( matrix3x4_t ) * m_CachedBoneData.Count() );
+
+			// Models with no bone hierarchy (a single bone) skip BuildTransformations(), so
+			// ApplyBoneMatrixTransform() never applies GetModelScale() to that bone. The normal
+			// render path compensates in C_BaseAnimating::DrawModel(), but a caller that reads the
+			// bone array directly -- e.g. the model render system's fast path -- would otherwise
+			// draw the model at its unscaled size. Apply the same compensation to the output.
+			CStudioHdr *pScaleHdr = GetModelPtr();
+			const float flModelScale = GetModelScale();
+			if ( pScaleHdr && pScaleHdr->numbones() == 1 &&
+				 ( flModelScale > 1.0f + FLT_EPSILON || flModelScale < 1.0f - FLT_EPSILON ) )
+			{
+				VectorScale( pBoneToWorldOut[0][0], flModelScale, pBoneToWorldOut[0][0] );
+				VectorScale( pBoneToWorldOut[0][1], flModelScale, pBoneToWorldOut[0][1] );
+				VectorScale( pBoneToWorldOut[0][2], flModelScale, pBoneToWorldOut[0][2] );
+			}
 		}
 		else
 		{
