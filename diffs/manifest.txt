@@ -5,6 +5,7 @@ materials/particle/droplets/droplets.vtf
 materials/particle/fire_particle_6/fire_particle_6.vtf
 materials/particle/vistasmokev1/vistasmokev1.vtf
 materials/particle/water_splash/water_splash.vtf
+models/props_c17/gravestone_cross001a.mdl
 models/props_c17/gravestone_cross001a.vvd
 models/zombie/new_zombie.dx80.vtx
 models/zombie/new_zombie.dx90.vtx
