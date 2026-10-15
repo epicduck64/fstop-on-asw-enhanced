@@ -109,8 +109,8 @@ CWeaponCamera::CWeaponCamera( void ) : m_CurIndex( -1 ), m_bInViewfinder( false 
 
 	m_nNumCaptureSlots			= g_CurMaxInvPhotos;
 	// F-STOP ("Aperture"): the FGD defaults these to 1, but the constructor hard-coded false.
-	m_bCanZoom					= true;
-	m_bCanScaleCapturedObjects	= true;
+	m_bCanZoom					= false;
+	m_bCanScaleCapturedObjects	= false;
 }
 
 //-----------------------------------------------------------------------------
